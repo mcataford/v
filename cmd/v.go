@@ -8,25 +8,12 @@ import (
 )
 
 // Main entrypoint.
-//
-// v <command> <...parameters>
-//
-// v install <version>
-//
-//	Installs <version> from remote.
-//
-// v where
-//
-//	Shows the current Python path.
-//
-// v use <version>
-//
-//	Uses the provided version as global python version.
 func main() {
 	args := os.Args[1:]
 	currentState := stateManager.ReadState()
 
 	cli := argparse.CLI{}
+
 	err := cli.AddCommand(
 		"where", subcommands.Where, "v where", "Prints the path to the current Python version.",
 	).AddCommand(
