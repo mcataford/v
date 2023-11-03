@@ -22,6 +22,7 @@ type CLI struct {
 	OrderedCommands []string
 	// Command metadata entries.
 	Commands map[string]Command
+	Metadata map[string]string
 }
 
 // Registers a command.
@@ -69,9 +70,9 @@ func (c CLI) Help() {
 		usageStrings = append(usageStrings, fmt.Sprintf("\033[1m%-30s\033[0m%s", command.Usage, command.Description))
 	}
 
-	helpString := fmt.Sprintf(`v: A simple version manager.
+	helpString := fmt.Sprintf(`v: A simple version manager. (v%s)
 ---
-%s`, strings.Join(usageStrings, "\n"))
+%s`, c.Metadata["Version"], strings.Join(usageStrings, "\n"))
 
 	fmt.Println(helpString)
 }

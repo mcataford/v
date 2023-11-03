@@ -7,8 +7,10 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 	argparse "v/internal/argparse"
 	stateManager "v/internal/state"
+	util "v/internal/util"
 )
 
 var pythonReleasesBaseURL = "https://www.python.org/ftp/python"
@@ -57,8 +59,10 @@ func downloadSource(version string, destination string) (PackageMetadata, error)
 
 	client := http.Client{}
 
-	fmt.Printf("🔨 Downloading source for Python %s\n", version)
+	dlPrint := util.StartFmtGroup(fmt.Sprintf("Downloading source for Python %s", version))
 
+	dlPrint(fmt.Sprintf("Fetching from %s", sourceUrl))
+	start := time.Now()
 	resp, err := client.Get(sourceUrl)
 
 	if err != nil {
@@ -71,11 +75,15 @@ func downloadSource(version string, destination string) (PackageMetadata, error)
 
 	defer file.Close()
 
+	dlPrint(fmt.Sprintf("✅ Done (%s)", time.Since(start)))
 	return PackageMetadata{ArchivePath: archivePath, Version: version}, nil
 }
 
 func buildFromSource(pkgMeta PackageMetadata, verbose bool) (PackageMetadata, error) {
-	fmt.Printf("🔨 Unpacking source for %s\n", pkgMeta.ArchivePath)
+	buildPrint := util.StartFmtGroup(fmt.Sprintf("Building from source"))
+	start := time.Now()
+
+	buildPrint(fmt.Sprintf("Unpacking source for %s", pkgMeta.ArchivePath))
 
 	_, untarErr := RunCommand([]string{"tar", "zxvf", pkgMeta.ArchivePath}, stateManager.GetPathFromStateDirectory("cache"), !verbose)
 
@@ -85,7 +93,7 @@ func buildFromSource(pkgMeta PackageMetadata, verbose bool) (PackageMetadata, er
 
 	unzippedRoot := strings.TrimSuffix(pkgMeta.ArchivePath, path.Ext(pkgMeta.ArchivePath))
 
-	fmt.Println("🔨 Building from source...")
+	buildPrint("Configuring installer")
 
 	targetDirectory := stateManager.GetPathFromStateDirectory(path.Join("runtimes", fmt.Sprintf("py-%s", pkgMeta.Version)))
 
@@ -94,16 +102,21 @@ func buildFromSource(pkgMeta PackageMetadata, verbose bool) (PackageMetadata, er
 	if configureErr != nil {
 		return pkgMeta, configureErr
 	}
+
+	buildPrint("Building")
 	_, buildErr := RunCommand([]string{"make", "altinstall"}, unzippedRoot, !verbose)
 
 	if buildErr != nil {
 		return pkgMeta, buildErr
 	}
 
+	if cleanupErr := os.RemoveAll(unzippedRoot); cleanupErr != nil {
+		return pkgMeta, cleanupErr
+	}
+
 	pkgMeta.InstallPath = targetDirectory
 
-	fmt.Printf("Installed Python %s at %s\n", pkgMeta.Version, pkgMeta.InstallPath)
-	fmt.Println("✅ All done!")
-
+	buildPrint(fmt.Sprintf("Installed Python %s at %s", pkgMeta.Version, pkgMeta.InstallPath))
+	buildPrint(fmt.Sprintf("✅ Done (%s)", time.Since(start)))
 	return pkgMeta, nil
 }

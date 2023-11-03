@@ -7,12 +7,21 @@ import (
 	subcommands "v/internal/subcommands"
 )
 
+const (
+	Version = "0.0.1"
+	Author  = "mcataford <hello@karnov.club>"
+)
+
 // Main entrypoint.
 func main() {
 	args := os.Args[1:]
 	currentState := stateManager.ReadState()
 
-	cli := argparse.CLI{}
+	cli := argparse.CLI{
+		Metadata: map[string]string{
+			"Version": Version,
+		},
+	}
 
 	err := cli.AddCommand(
 		"install", subcommands.InstallPython, "v install <version>", "Downloads, builds and installs a new version of Python.",
