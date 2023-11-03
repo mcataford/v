@@ -18,6 +18,9 @@ type Command struct {
 // Must be initialized with commands via AddCommand before running
 // with Run.
 type CLI struct {
+	// Commands in enumeration order.
+	OrderedCommands []string
+	// Command metadata entries.
 	Commands map[string]Command
 }
 
@@ -28,8 +31,10 @@ type CLI struct {
 func (c CLI) AddCommand(label string, handler func([]string, Flags, stateManager.State) error, usage string, description string) CLI {
 	if c.Commands == nil {
 		c.Commands = map[string]Command{}
+		c.OrderedCommands = []string{}
 	}
 
+	c.OrderedCommands = append(c.OrderedCommands, label)
 	c.Commands[label] = Command{Label: label, Handler: handler, Usage: usage, Description: description}
 
 	return c
@@ -59,7 +64,8 @@ func (c CLI) Run(args []string, currentState stateManager.State) error {
 func (c CLI) Help() {
 	usageStrings := []string{}
 
-	for _, command := range c.Commands {
+	for _, commandLabel := range c.OrderedCommands {
+		command := c.Commands[commandLabel]
 		usageStrings = append(usageStrings, fmt.Sprintf("\033[1m%-30s\033[0m%s", command.Usage, command.Description))
 	}
 

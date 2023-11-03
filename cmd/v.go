@@ -15,17 +15,19 @@ func main() {
 	cli := argparse.CLI{}
 
 	err := cli.AddCommand(
-		"where", subcommands.Where, "v where", "Prints the path to the current Python version.",
+		"install", subcommands.InstallPython, "v install <version>", "Downloads, builds and installs a new version of Python.",
+	).AddCommand(
+		"uninstall", subcommands.UninstallPython, "v uninstall <version>", "Uninstalls the given Python version.",
+	).AddCommand(
+		"use", subcommands.Use, "v use <version>", "Selects which Python version to use.",
 	).AddCommand(
 		"ls", subcommands.ListVersions, "v ls", "Lists the installed Python versions.",
 	).AddCommand(
-		"install", subcommands.InstallPython, "v install <version>", "Downloads, builds and installs a new version of Python.",
+		"where", subcommands.Where, "v where", "Prints the path to the current Python version.",
 	).AddCommand(
 		"which", subcommands.Which, "v which", "Prints the current Python version.",
 	).AddCommand(
 		"init", subcommands.Initialize, "v init", "Initializes the v state.",
-	).AddCommand(
-		"use", subcommands.Use, "v use <version>", "Selects which Python version to use.",
 	).Run(args, currentState)
 
 	if err != nil {
