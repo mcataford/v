@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path"
-	argparse "v/internal/argparse"
-	stateManager "v/internal/state"
+	argparse "v/argparse"
+	stateManager "v/state"
 )
 
 func UninstallPython(args []string, flags argparse.Flags, currentState stateManager.State) error {

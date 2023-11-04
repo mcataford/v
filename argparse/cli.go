@@ -3,7 +3,7 @@ package argparse
 import (
 	"fmt"
 	"strings"
-	stateManager "v/internal/state"
+	stateManager "v/state"
 )
 
 // Command definition for CLI subcommands.

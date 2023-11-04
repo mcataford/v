@@ -2,9 +2,9 @@ package main
 
 import (
 	"os"
-	argparse "v/internal/argparse"
-	stateManager "v/internal/state"
-	subcommands "v/internal/subcommands"
+	argparse "v/argparse"
+	stateManager "v/state"
+	subcommands "v/commands"
 )
 
 const (

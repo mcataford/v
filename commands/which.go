@@ -2,8 +2,8 @@ package subcommands
 
 import (
 	"fmt"
-	argparse "v/internal/argparse"
-	stateManager "v/internal/state"
+	argparse "v/argparse"
+	stateManager "v/state"
 )
 
 func Which(args []string, flags argparse.Flags, currentState stateManager.State) error {

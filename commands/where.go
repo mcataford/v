@@ -3,8 +3,8 @@ package subcommands
 import (
 	"fmt"
 	"strings"
-	argparse "v/internal/argparse"
-	stateManager "v/internal/state"
+	argparse "v/argparse"
+	stateManager "v/state"
 )
 
 func versionStringToStruct(version string) VersionTag {

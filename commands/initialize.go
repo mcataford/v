@@ -3,8 +3,8 @@ package subcommands
 import (
 	"os"
 	"path"
-	argparse "v/internal/argparse"
-	stateManager "v/internal/state"
+	argparse "v/argparse"
+	stateManager "v/state"
 )
 
 var DIRECTORIES = []string{

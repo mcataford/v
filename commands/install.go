@@ -8,9 +8,9 @@ import (
 	"path"
 	"strings"
 	"time"
-	argparse "v/internal/argparse"
-	stateManager "v/internal/state"
-	util "v/internal/util"
+	argparse "v/argparse"
+	stateManager "v/state"
+	util "v/util"
 )
 
 var pythonReleasesBaseURL = "https://www.python.org/ftp/python"

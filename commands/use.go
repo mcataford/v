@@ -3,8 +3,8 @@ package subcommands
 import (
 	"errors"
 	"fmt"
-	argparse "v/internal/argparse"
-	stateManager "v/internal/state"
+	argparse "v/argparse"
+	stateManager "v/state"
 )
 
 func Use(args []string, flags argparse.Flags, currentState stateManager.State) error {
