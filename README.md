@@ -22,7 +22,15 @@ Pre-built binaries are not currently available. You can clone the repository and
 You should find a suitable place for the binary (`/usr/local/bin` is a good location) and if not already included, add its location to `$PATH`.
 
 Finally, run `v init` to create directories to store artifacts and state (under `~/.v` unless override using the
-`V_ROOT` environment variable) and add `~/.v/shims` to your `$PATH` as well.
+`V_ROOT` environment variable). The following should also be added to your shell's configuration (i.e. `.zshrc`,
+`.bashrc`, ...):
+
+```sh
+export PATH=<path-to-v-executable>:$PATH
+eval "$(v init --add-path)"
+```
+
+This will handle adding shim paths to your shell without hassle.
 
 ### Usage
 
