@@ -5,8 +5,9 @@ import (
 )
 
 const (
-	Version = "0.0.1"
-	Author  = "mcataford <hello@karnov.club>"
+	Version  = "0.0.2"
+	Author   = "Marc Cataford <hello@karnov.club>"
+	Homepage = "https://github.com/mcataford/v"
 )
 
 // Main entrypoint.
