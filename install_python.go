@@ -1,4 +1,4 @@
-package subcommands
+package main
 
 import (
 	"fmt"
@@ -8,9 +8,6 @@ import (
 	"path"
 	"strings"
 	"time"
-	argparse "v/argparse"
-	stateManager "v/state"
-	util "v/util"
 )
 
 var pythonReleasesBaseURL = "https://www.python.org/ftp/python"
@@ -27,11 +24,11 @@ type VersionTag struct {
 	Patch string
 }
 
-func InstallPython(args []string, flags argparse.Flags, currentState stateManager.State) error {
+func InstallPython(args []string, flags Flags, currentState State) error {
 	verbose := flags.Verbose
 	version := args[1]
 
-	if err := validateVersion(version); err != nil {
+	if err := ValidateVersion(version); err != nil {
 		return err
 	}
 
@@ -53,13 +50,13 @@ func InstallPython(args []string, flags argparse.Flags, currentState stateManage
 // and stores it at <destination>.
 func downloadSource(version string, destination string) (PackageMetadata, error) {
 	archiveName := fmt.Sprintf("Python-%s.tgz", version)
-	archivePath := stateManager.GetPathFromStateDirectory(path.Join("cache", archiveName))
+	archivePath := GetPathFromStateDirectory(path.Join("cache", archiveName))
 	sourceUrl := fmt.Sprintf("%s/%s/%s", pythonReleasesBaseURL, version, archiveName)
 	file, _ := os.Create(archivePath)
 
 	client := http.Client{}
 
-	dlPrint := util.StartFmtGroup(fmt.Sprintf("Downloading source for Python %s", version))
+	dlPrint := StartFmtGroup(fmt.Sprintf("Downloading source for Python %s", version))
 
 	dlPrint(fmt.Sprintf("Fetching from %s", sourceUrl))
 	start := time.Now()
@@ -80,12 +77,12 @@ func downloadSource(version string, destination string) (PackageMetadata, error)
 }
 
 func buildFromSource(pkgMeta PackageMetadata, verbose bool) (PackageMetadata, error) {
-	buildPrint := util.StartFmtGroup(fmt.Sprintf("Building from source"))
+	buildPrint := StartFmtGroup(fmt.Sprintf("Building from source"))
 	start := time.Now()
 
 	buildPrint(fmt.Sprintf("Unpacking source for %s", pkgMeta.ArchivePath))
 
-	_, untarErr := RunCommand([]string{"tar", "zxvf", pkgMeta.ArchivePath}, stateManager.GetPathFromStateDirectory("cache"), !verbose)
+	_, untarErr := RunCommand([]string{"tar", "zxvf", pkgMeta.ArchivePath}, GetPathFromStateDirectory("cache"), !verbose)
 
 	if untarErr != nil {
 		return pkgMeta, untarErr
@@ -95,7 +92,7 @@ func buildFromSource(pkgMeta PackageMetadata, verbose bool) (PackageMetadata, er
 
 	buildPrint("Configuring installer")
 
-	targetDirectory := stateManager.GetPathFromStateDirectory(path.Join("runtimes", fmt.Sprintf("py-%s", pkgMeta.Version)))
+	targetDirectory := GetPathFromStateDirectory(path.Join("runtimes", fmt.Sprintf("py-%s", pkgMeta.Version)))
 
 	_, configureErr := RunCommand([]string{"./configure", fmt.Sprintf("--prefix=%s", targetDirectory), "--enable-optimizations"}, unzippedRoot, !verbose)
 
