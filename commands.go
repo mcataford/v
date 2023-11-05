@@ -32,6 +32,11 @@ func writeShim(shimPath string) error {
 // Sets up directories and files used to store downloaded archives,
 // installed runtimes and metadata.
 func Initialize(args []string, flags Flags, currentState State) error {
+	if flags.AddPath {
+		fmt.Printf("export PATH=%s:$PATH\n", GetStatePath("shims"))
+		return nil
+	}
+
 	os.Mkdir(GetStatePath(), DEFAULT_PERMISSION)
 	for _, dir := range DIRECTORIES {
 		os.Mkdir(GetStatePath(dir), DEFAULT_PERMISSION)

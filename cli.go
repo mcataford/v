@@ -6,6 +6,7 @@ import (
 )
 
 type Flags struct {
+	AddPath bool
 	NoCache bool
 	Verbose bool
 }
@@ -91,10 +92,13 @@ func collectFlags(args []string) Flags {
 			continue
 		}
 
-		if arg == "--verbose" {
+		switch arg {
+		case "--verbose":
 			collected.Verbose = true
-		} else if arg == "--no-cache" {
+		case "--no-cache":
 			collected.NoCache = true
+		case "--add-path":
+			collected.AddPath = true
 		}
 	}
 
