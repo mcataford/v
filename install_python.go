@@ -111,7 +111,7 @@ func buildFromSource(pkgMeta PackageMetadata, verbose bool) (PackageMetadata, er
 	}
 
 	buildPrint("Building")
-	_, buildErr := RunCommand([]string{"make", "altinstall"}, unzippedRoot, !verbose)
+	_, buildErr := RunCommand([]string{"make", "altinstall", "-j4"}, unzippedRoot, !verbose)
 
 	if buildErr != nil {
 		return pkgMeta, buildErr
