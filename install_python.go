@@ -26,6 +26,10 @@ type VersionTag struct {
 	Patch string
 }
 
+func (t VersionTag) MajorMinor() string {
+	return fmt.Sprintf("%s.%s", t.Major, t.Minor)
+}
+
 func InstallPython(args []string, flags Flags, currentState State) error {
 	verbose := flags.Verbose
 	version := args[1]

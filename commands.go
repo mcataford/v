@@ -97,8 +97,7 @@ func ListVersions(args []string, flags Flags, currentState State) error {
 func Where(args []string, flags Flags, currentState State) error {
 	version := currentState.GlobalVersion
 	tag := VersionStringToStruct(version)
-	withoutPatch := fmt.Sprintf("%s.%s", tag.Major, tag.Minor)
-	fmt.Println(GetStatePath("runtimes", fmt.Sprintf("py-%s", currentState.GlobalVersion), "bin", fmt.Sprintf("python%s", withoutPatch)))
+	fmt.Println(GetStatePath("runtimes", fmt.Sprintf("py-%s", currentState.GlobalVersion), "bin", fmt.Sprintf("python%s", tag.MajorMinor())))
 	return nil
 }
 
