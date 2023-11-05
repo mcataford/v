@@ -6,6 +6,7 @@ import (
 )
 
 type Flags struct {
+	NoCache bool
 	Verbose bool
 }
 
@@ -92,6 +93,8 @@ func collectFlags(args []string) Flags {
 
 		if arg == "--verbose" {
 			collected.Verbose = true
+		} else if arg == "--no-cache" {
+			collected.NoCache = true
 		}
 	}
 

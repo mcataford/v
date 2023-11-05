@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -32,7 +33,7 @@ func InstallPython(args []string, flags Flags, currentState State) error {
 		return err
 	}
 
-	packageMetadata, dlerr := downloadSource(version, "")
+	packageMetadata, dlerr := downloadSource(version, flags.NoCache)
 
 	if dlerr != nil {
 		return dlerr
@@ -46,31 +47,35 @@ func InstallPython(args []string, flags Flags, currentState State) error {
 	return nil
 }
 
-// Fetches the Python tarball for version <version> from python.org
-// and stores it at <destination>.
-func downloadSource(version string, destination string) (PackageMetadata, error) {
+// Fetches the Python tarball for version <version> from python.org.
+func downloadSource(version string, skipCache bool) (PackageMetadata, error) {
 	archiveName := fmt.Sprintf("Python-%s.tgz", version)
 	archivePath := GetPathFromStateDirectory(path.Join("cache", archiveName))
 	sourceUrl := fmt.Sprintf("%s/%s/%s", pythonReleasesBaseURL, version, archiveName)
-	file, _ := os.Create(archivePath)
 
 	client := http.Client{}
 
 	dlPrint := StartFmtGroup(fmt.Sprintf("Downloading source for Python %s", version))
-
-	dlPrint(fmt.Sprintf("Fetching from %s", sourceUrl))
 	start := time.Now()
-	resp, err := client.Get(sourceUrl)
+	_, err := os.Stat(archivePath)
 
-	if err != nil {
-		return PackageMetadata{}, err
+	if errors.Is(err, os.ErrNotExist) || skipCache {
+		dlPrint(fmt.Sprintf("Fetching from %s", sourceUrl))
+
+		resp, err := client.Get(sourceUrl)
+
+		if err != nil {
+			return PackageMetadata{}, err
+		}
+
+		defer resp.Body.Close()
+		file, _ := os.Create(archivePath)
+		io.Copy(file, resp.Body)
+
+		defer file.Close()
+	} else {
+		dlPrint(fmt.Sprintf("Found in cache: %s", archivePath))
 	}
-
-	defer resp.Body.Close()
-
-	io.Copy(file, resp.Body)
-
-	defer file.Close()
 
 	dlPrint(fmt.Sprintf("✅ Done (%s)", time.Since(start)))
 	return PackageMetadata{ArchivePath: archivePath, Version: version}, nil
