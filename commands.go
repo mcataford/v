@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
 	"strings"
 )
 
@@ -33,21 +32,19 @@ func writeShim(shimPath string) error {
 // Sets up directories and files used to store downloaded archives,
 // installed runtimes and metadata.
 func Initialize(args []string, flags Flags, currentState State) error {
-	stateDirectory := GetStateDirectory()
-
-	os.Mkdir(stateDirectory, DEFAULT_PERMISSION)
+	os.Mkdir(GetStatePath(), DEFAULT_PERMISSION)
 	for _, dir := range DIRECTORIES {
-		os.Mkdir(GetPathFromStateDirectory(dir), DEFAULT_PERMISSION)
+		os.Mkdir(GetStatePath(dir), DEFAULT_PERMISSION)
 	}
 
 	for _, shim := range SHIMS {
-		writeShim(GetPathFromStateDirectory(path.Join("shims", shim)))
+		writeShim(GetStatePath("shims", shim))
 	}
 
 	return nil
 }
 func UninstallPython(args []string, flags Flags, currentState State) error {
-	runtimePath := GetPathFromStateDirectory(path.Join("runtimes", fmt.Sprintf("py-%s", args[1])))
+	runtimePath := GetStatePath("runtimes", fmt.Sprintf("py-%s", args[1]))
 	err := os.RemoveAll(runtimePath)
 	return err
 }
@@ -78,7 +75,7 @@ func Use(args []string, flags Flags, currentState State) error {
 	return nil
 }
 func ListVersions(args []string, flags Flags, currentState State) error {
-	runtimesDir := GetPathFromStateDirectory("runtimes")
+	runtimesDir := GetStatePath("runtimes")
 	entries, err := os.ReadDir(runtimesDir)
 
 	if err != nil {
@@ -100,8 +97,7 @@ func ListVersions(args []string, flags Flags, currentState State) error {
 func Where(args []string, flags Flags, currentState State) error {
 	version := currentState.GlobalVersion
 	tag := VersionStringToStruct(version)
-	withoutPatch := fmt.Sprintf("%s.%s", tag.Major, tag.Minor)
-	fmt.Printf("%s/runtimes/py-%s/bin/python%s\n", GetStateDirectory(), currentState.GlobalVersion, withoutPatch)
+	fmt.Println(GetStatePath("runtimes", fmt.Sprintf("py-%s", currentState.GlobalVersion), "bin", fmt.Sprintf("python%s", tag.MajorMinor())))
 	return nil
 }
 

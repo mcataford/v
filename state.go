@@ -14,7 +14,7 @@ type State struct {
 	GlobalVersion string `json:"globalVersion"`
 }
 
-func GetStateDirectory() string {
+func GetStatePath(pathSegments ...string) string {
 	home, _ := os.UserHomeDir()
 	userDefinedRoot, found := os.LookupEnv("V_ROOT")
 
@@ -23,16 +23,13 @@ func GetStateDirectory() string {
 	if found {
 		root = userDefinedRoot
 	}
-
-	return root
-}
-
-func GetPathFromStateDirectory(suffix string) string {
-	return path.Join(GetStateDirectory(), suffix)
+	allSegments := []string{root}
+	allSegments = append(allSegments, pathSegments...)
+	return path.Join(allSegments...)
 }
 
 func ReadState() State {
-	c, _ := ioutil.ReadFile(GetPathFromStateDirectory("state.json"))
+	c, _ := ioutil.ReadFile(GetStatePath("state.json"))
 
 	state := State{}
 
@@ -45,11 +42,11 @@ func WriteState(version string) {
 	state := State{GlobalVersion: version}
 
 	d, _ := json.Marshal(state)
-	ioutil.WriteFile(GetPathFromStateDirectory("state.json"), d, 0750)
+	ioutil.WriteFile(GetStatePath("state.json"), d, 0750)
 }
 
 func GetAvailableVersions() []string {
-	entries, _ := os.ReadDir(GetPathFromStateDirectory("runtimes"))
+	entries, _ := os.ReadDir(GetStatePath("runtimes"))
 
 	versions := []string{}
 
