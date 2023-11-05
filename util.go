@@ -2,10 +2,19 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
 )
+
+func StartFmtGroup(label string) func(string) {
+	fmt.Printf("\033[1m%s\033[0m\n", label)
+
+	return func(message string) {
+		fmt.Printf("    %s\n", message)
+	}
+}
 
 func VersionStringToStruct(version string) VersionTag {
 	splitVersion := strings.Split(version, ".")

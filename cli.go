@@ -9,22 +9,6 @@ type Flags struct {
 	Verbose bool
 }
 
-func CollectFlags(args []string) Flags {
-	collected := Flags{}
-
-	for _, arg := range args {
-		if !strings.HasPrefix(arg, "--") {
-			continue
-		}
-
-		if arg == "--verbose" {
-			collected.Verbose = true
-		}
-	}
-
-	return collected
-}
-
 // Command definition for CLI subcommands.
 type Command struct {
 	Label       string
@@ -75,7 +59,7 @@ func (c CLI) Run(args []string, currentState State) error {
 		return nil
 	}
 
-	flags := CollectFlags(args)
+	flags := collectFlags(args)
 	return c.Commands[command].Handler(args, flags, currentState)
 }
 
@@ -94,4 +78,22 @@ func (c CLI) Help() {
 %s`, c.Metadata["Version"], strings.Join(usageStrings, "\n"))
 
 	fmt.Println(helpString)
+}
+
+// Traverses input arguments and extracts flags of
+// the form --<flag-label>.
+func collectFlags(args []string) Flags {
+	collected := Flags{}
+
+	for _, arg := range args {
+		if !strings.HasPrefix(arg, "--") {
+			continue
+		}
+
+		if arg == "--verbose" {
+			collected.Verbose = true
+		}
+	}
+
+	return collected
 }
