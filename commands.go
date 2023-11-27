@@ -99,14 +99,35 @@ func ListVersions(args []string, flags Flags, currentState State) error {
 	return nil
 }
 
+// Where prints out the system path to the executable being used by `python`.
 func Where(args []string, flags Flags, currentState State) error {
-	version := currentState.GlobalVersion
-	tag := VersionStringToStruct(version)
-	fmt.Println(GetStatePath("runtimes", fmt.Sprintf("py-%s", currentState.GlobalVersion), "bin", fmt.Sprintf("python%s", tag.MajorMinor())))
+	selectedVersion, _ := DetermineSelectedPythonVersion(currentState)
+
+	if selectedVersion == "SYSTEM" {
+		_, sysPath := DetermineSystemPython()
+		fmt.Println(sysPath)
+		return nil
+	}
+
+	tag := VersionStringToStruct(selectedVersion)
+	fmt.Println(GetStatePath("runtimes", fmt.Sprintf("py-%s", selectedVersion), "bin", fmt.Sprintf("python%s", tag.MajorMinor())))
 	return nil
 }
 
+// Which prints out the Python version that will be used by shims. It can be invoked
+// directly by the `v which` command.
+//
+// If no version is set (i.e. none is installed, the specified version is not installed),
+// the system version is used and 'SYSTEM' is printed by Which.
 func Which(args []string, flags Flags, currentState State) error {
-	fmt.Println(currentState.GlobalVersion)
+	selectedVersion, _ := DetermineSelectedPythonVersion(currentState)
+
+	if selectedVersion == "SYSTEM" {
+		sysVersion, _ := DetermineSystemPython()
+		fmt.Println(sysVersion)
+		return nil
+	}
+
+	fmt.Println(selectedVersion)
 	return nil
 }
