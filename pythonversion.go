@@ -29,10 +29,10 @@ func DetermineSystemPython() (string, string) {
 	})
 	// FIXME: This should be set through RunCommand instead.
 	os.Setenv("PATH", strings.Join(pathWithoutShims, ":"))
-	whichOut, _ := RunCommand([]string{"which", "python"}, ".", true)
-	versionOut, _ := RunCommand([]string{"python", "--version"}, ".", true)
+	whichOut, _ := RunCommand([]string{"which", "python"}, GetStatePath(), true)
+	versionOut, _ := RunCommand([]string{"python", "--version"}, GetStatePath(), true)
 
-	detectedVersion, _ := strings.CutPrefix(versionOut, "Python ")
+	detectedVersion, _ := strings.CutPrefix(versionOut, "Python")
 
-	return detectedVersion, whichOut
+	return strings.TrimSpace(detectedVersion), strings.TrimSpace(whichOut)
 }
