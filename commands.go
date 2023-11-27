@@ -21,7 +21,7 @@ var SHIMS = []string{
 const DEFAULT_PERMISSION = 0775
 
 func writeShim(shimPath string) error {
-	shimContent := []byte("#!/bin/bash\n$(v where) $@")
+	shimContent := []byte("#!/bin/bash\n$(v where --raw) $@")
 	if err := os.WriteFile(shimPath, shimContent, DEFAULT_PERMISSION); err != nil {
 		return err
 	}
@@ -103,14 +103,23 @@ func ListVersions(args []string, flags Flags, currentState State) error {
 func Where(args []string, flags Flags, currentState State) error {
 	selectedVersion, _ := DetermineSelectedPythonVersion(currentState)
 
+	var printedPath string
 	if selectedVersion == "SYSTEM" {
-		_, sysPath := DetermineSystemPython()
-		fmt.Println(sysPath)
-		return nil
+		_, printedPath = DetermineSystemPython()
+	} else {
+		tag := VersionStringToStruct(selectedVersion)
+		printedPath = GetStatePath("runtimes", fmt.Sprintf("py-%s", selectedVersion), "bin", fmt.Sprintf("python%s", tag.MajorMinor()))
 	}
 
-	tag := VersionStringToStruct(selectedVersion)
-	fmt.Println(GetStatePath("runtimes", fmt.Sprintf("py-%s", selectedVersion), "bin", fmt.Sprintf("python%s", tag.MajorMinor())))
+	prefix := "Python path: "
+
+	if flags.RawOutput {
+		prefix = ""
+	} else {
+		printedPath = Bold(printedPath)
+	}
+
+	fmt.Printf("%s%s\n", prefix, printedPath)
 	return nil
 }
 
@@ -121,13 +130,21 @@ func Where(args []string, flags Flags, currentState State) error {
 // the system version is used and 'SYSTEM' is printed by Which.
 func Which(args []string, flags Flags, currentState State) error {
 	selectedVersion, _ := DetermineSelectedPythonVersion(currentState)
+	printedVersion := selectedVersion
 
 	if selectedVersion == "SYSTEM" {
 		sysVersion, _ := DetermineSystemPython()
-		fmt.Println(sysVersion)
-		return nil
+		printedVersion = fmt.Sprintf("%s (system)", sysVersion)
 	}
 
-	fmt.Println(selectedVersion)
+	prefix := "Python version: "
+
+	if flags.RawOutput {
+		prefix = ""
+	} else {
+		printedVersion = Bold(printedVersion)
+	}
+
+	fmt.Printf("%s%s\n", prefix, printedVersion)
 	return nil
 }
