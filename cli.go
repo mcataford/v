@@ -6,9 +6,10 @@ import (
 )
 
 type Flags struct {
-	AddPath bool
-	NoCache bool
-	Verbose bool
+	AddPath   bool
+	NoCache   bool
+	Verbose   bool
+	RawOutput bool
 }
 
 // Command definition for CLI subcommands.
@@ -99,6 +100,8 @@ func collectFlags(args []string) Flags {
 			collected.NoCache = true
 		case "--add-path":
 			collected.AddPath = true
+		case "--raw":
+			collected.RawOutput = true
 		}
 	}
 

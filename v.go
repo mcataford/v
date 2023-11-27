@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	Version  = "0.0.5"
+	Version  = "0.0.6"
 	Author   = "Marc Cataford <hello@karnov.club>"
 	Homepage = "https://github.com/mcataford/v"
 )
