@@ -19,7 +19,6 @@ var SHIMS = []string{
 }
 
 const DEFAULT_PERMISSION = 0775
-const DEFAULT_SYSTEM_PY_PATH = "/bin/python"
 
 func writeShim(shimPath string) error {
 	shimContent := []byte("#!/bin/bash\n$(v where) $@")
