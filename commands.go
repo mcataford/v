@@ -19,6 +19,7 @@ var SHIMS = []string{
 }
 
 const DEFAULT_PERMISSION = 0775
+const DEFAULT_SYSTEM_PY_PATH = "/bin/python"
 
 func writeShim(shimPath string) error {
 	shimContent := []byte("#!/bin/bash\n$(v where) $@")
@@ -99,14 +100,34 @@ func ListVersions(args []string, flags Flags, currentState State) error {
 	return nil
 }
 
+// Where prints out the system path to the executable being used by `python`.
 func Where(args []string, flags Flags, currentState State) error {
-	version := currentState.GlobalVersion
-	tag := VersionStringToStruct(version)
-	fmt.Println(GetStatePath("runtimes", fmt.Sprintf("py-%s", currentState.GlobalVersion), "bin", fmt.Sprintf("python%s", tag.MajorMinor())))
+	selectedVersion, _ := DetermineSelectedPythonVersion(currentState)
+	tag := VersionStringToStruct(selectedVersion)
+	fmt.Println(GetStatePath("runtimes", fmt.Sprintf("py-%s", selectedVersion), "bin", fmt.Sprintf("python%s", tag.MajorMinor())))
 	return nil
 }
 
+// Which prints out the Python version that will be used by shims. It can be invoked
+// directly by the `v which` command.
+//
+// If no version is set (i.e. none is installed, the specified version is not installed),
+// the system version is used and 'SYSTEM' is printed by Which.
 func Which(args []string, flags Flags, currentState State) error {
-	fmt.Println(currentState.GlobalVersion)
+	selectedVersion, _ := DetermineSelectedPythonVersion(currentState)
+	fmt.Println(selectedVersion)
 	return nil
+}
+
+// DetermineSelectedPythonVersion returns the Python runtime version that should be
+// used according to v.
+//
+// By default, 'SYSTEM' is returned, which signals that the non-v-managed Python
+// runtime is used.
+func DetermineSelectedPythonVersion(currentState State) (string, error) {
+	if len(currentState.GlobalVersion) != 0 {
+		return currentState.GlobalVersion, nil
+	}
+
+	return "SYSTEM", nil
 }
