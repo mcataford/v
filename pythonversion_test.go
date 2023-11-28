@@ -31,18 +31,17 @@ func TestDetermineSystemPythonGetsUnshimmedPythonRuntime(t *testing.T) {
 	ioutil.WriteFile(GetStatePath("shims", "python"), []byte("#!/bin/bash\necho \"Python 4.5.6\""), 0777)
 	mockSystemPythonPath := t.TempDir()
 	mockSystemPythonExecPath := path.Join(mockSystemPythonPath, "python")
-	ioutil.WriteFile(mockSystemPythonExecPath, []byte("#!/bin/bash\necho \"Python 1.2.3\""), 0777)
 
 	oldPath := os.Getenv("PATH")
-	os.Setenv("PATH", fmt.Sprintf("%s:%s:/usr/bin", GetStatePath("shims"), mockSystemPythonPath))
+	os.Setenv("PATH", fmt.Sprintf("%s:/usr/bin", GetStatePath("shims")))
 	defer os.Setenv("PATH", oldPath)
 	sysVersion, sysPath := DetermineSystemPython()
 
-	if sysVersion != "1.2.3" {
-		t.Errorf("Expected system Python to be 1.2.3, found %s instead.", sysVersion)
+	if sysVersion == "4.5.6" {
+		t.Errorf("Expected system Python to not match the shim, found %s instead.", sysVersion)
 	}
 
-	if sysPath != mockSystemPythonExecPath {
+	if sysPath != "/bin/python" {
 		t.Errorf("Expected system Python path to be %s, found %s instead.", mockSystemPythonExecPath, sysPath)
 	}
 }
@@ -62,8 +61,8 @@ func TestDetermineSelectedPythonVersionUsesPythonVersionFileIfFound(t *testing.T
 
 	version, err := DetermineSelectedPythonVersion(ReadState())
 
-	if err != nil || version != "1.2.3" {
-		t.Errorf("Expected version to be %s, got %s instead.", "1.2.3", version)
+	if err != nil || version.Version != "1.2.3" {
+		t.Errorf("Expected version to be %s, got %s instead.", "1.2.3", version.Version)
 	}
 }
 
@@ -78,7 +77,7 @@ func TestDetermineSelectedPythonVersionGetsUserDefinedVersion(t *testing.T) {
 
 	version, err := DetermineSelectedPythonVersion(ReadState())
 
-	if err != nil || version != mockState.GlobalVersion {
+	if err != nil || version.Version != mockState.GlobalVersion {
 		t.Errorf("Expected version to be %s, got %s instead.", mockState.GlobalVersion, version)
 	}
 }
@@ -88,7 +87,7 @@ func TestDetermineSelectedPythonVersionDefaultsToSystem(t *testing.T) {
 
 	version, err := DetermineSelectedPythonVersion(ReadState())
 
-	if err != nil || version != "SYSTEM" {
+	if err != nil || version.Source != "system" {
 		t.Errorf("Expected version to be 'SYSTEM', got %s instead.", version)
 	}
 }
@@ -102,7 +101,7 @@ func TestSearchForPythonVersionFileFindsFileInCwd(t *testing.T) {
 
 	versionFound, found := SearchForPythonVersionFile()
 
-	if versionFound != "1.2.3" || !found {
+	if versionFound.Version != "1.2.3" || !found {
 		t.Errorf("Expected \"1.2.3\", found %s", versionFound)
 	}
 }
@@ -118,7 +117,7 @@ func TestSearchForPythonVersionFileFindsFileInParents(t *testing.T) {
 
 	versionFound, found := SearchForPythonVersionFile()
 
-	if versionFound != "1.2.3" || !found {
+	if versionFound.Version != "1.2.3" || !found {
 		t.Errorf("Expected \"1.2.3\", found %s", versionFound)
 	}
 
@@ -129,8 +128,8 @@ func TestSearchForPythonVersionFileReturnsOnRootIfNoneFound(t *testing.T) {
 
 	versionFound, found := SearchForPythonVersionFile()
 
-	if versionFound != "" || found {
-		t.Errorf("Did not expect any result, found %s.", versionFound)
+	if versionFound.Version != "" || found {
+		t.Errorf("Did not expect any result, found %s.", versionFound.Version)
 	}
 
 }

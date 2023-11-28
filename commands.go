@@ -105,11 +105,11 @@ func Where(args []string, flags Flags, currentState State) error {
 
 	var printedPath string
 
-	if selectedVersion == "SYSTEM" {
+	if selectedVersion.Source == "system" {
 		_, sysPath := DetermineSystemPython()
 		printedPath = fmt.Sprintf("%s (system)", sysPath)
 	} else {
-		tag := VersionStringToStruct(selectedVersion)
+		tag := VersionStringToStruct(selectedVersion.Version)
 		printedPath = GetStatePath("runtimes", fmt.Sprintf("py-%s", selectedVersion), "bin", fmt.Sprintf("python%s", tag.MajorMinor()))
 	}
 
@@ -132,9 +132,9 @@ func Where(args []string, flags Flags, currentState State) error {
 // the system version is used and 'SYSTEM' is printed by Which.
 func Which(args []string, flags Flags, currentState State) error {
 	selectedVersion, _ := DetermineSelectedPythonVersion(currentState)
-	printedVersion := selectedVersion
+	printedVersion := selectedVersion.Version
 
-	if selectedVersion == "SYSTEM" {
+	if selectedVersion.Source == "system" {
 		sysVersion, _ := DetermineSystemPython()
 		printedVersion = fmt.Sprintf("%s (system)", sysVersion)
 	}
