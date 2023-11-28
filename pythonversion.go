@@ -17,7 +17,7 @@ func SearchForPythonVersionFile() (string, bool) {
 		content, err := ioutil.ReadFile(path.Join(currentPath, ".python-version"))
 
 		if err == nil {
-			versionFound = string(content)
+			versionFound = strings.TrimSpace(string(content))
 			break
 		}
 
@@ -62,8 +62,11 @@ func DetermineSystemPython() (string, string) {
 	pathWithoutShims := slices.DeleteFunc(strings.Split(currentPathEnv, ":"), func(element string) bool {
 		return element == GetStatePath("shims")
 	})
+
 	// FIXME: This should be set through RunCommand instead.
 	os.Setenv("PATH", strings.Join(pathWithoutShims, ":"))
+	defer os.Setenv("PATH", currentPathEnv)
+
 	whichOut, _ := RunCommand([]string{"which", "python"}, GetStatePath(), true)
 	versionOut, _ := RunCommand([]string{"python", "--version"}, GetStatePath(), true)
 
