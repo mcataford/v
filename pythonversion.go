@@ -1,17 +1,52 @@
 package main
 
 import (
+	"io/ioutil"
 	"os"
+	"path"
 	"slices"
 	"strings"
 )
 
+// SearchForPythonVersionFile crawls up to the system root to find any
+// .python-version file that could set the current version.
+func SearchForPythonVersionFile() (string, bool) {
+	currentPath, _ := os.Getwd()
+	var versionFound string
+	for {
+		content, err := ioutil.ReadFile(path.Join(currentPath, ".python-version"))
+
+		if err == nil {
+			versionFound = string(content)
+			break
+		}
+
+		nextPath := path.Dir(currentPath)
+
+		if currentPath == nextPath {
+			break
+		}
+
+		currentPath = nextPath
+	}
+
+	return versionFound, versionFound != ""
+}
+
 // DetermineSelectedPythonVersion returns the Python runtime version that should be
 // used according to v.
 //
-// By default, 'SYSTEM' is returned, which signals that the non-v-managed Python
-// runtime is used.
+// First, v will look in the current directory and all its parents for a .python-version
+// file that would indicate which version is preferred. If none are found, the global
+// user-defined version (via `v use <version>`) is used. If there is none, the system
+// Python version is used.
 func DetermineSelectedPythonVersion(currentState State) (string, error) {
+	pythonFileVersion, pythonFileVersionFound := SearchForPythonVersionFile()
+
+	if pythonFileVersionFound {
+		return pythonFileVersion, nil
+	}
+
 	if len(currentState.GlobalVersion) != 0 {
 		return currentState.GlobalVersion, nil
 	}
