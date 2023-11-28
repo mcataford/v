@@ -21,7 +21,7 @@ var SHIMS = []string{
 const DEFAULT_PERMISSION = 0775
 
 func writeShim(shimPath string) error {
-	shimContent := []byte("#!/bin/bash\n$(v where --raw) $@")
+	shimContent := []byte("#!/bin/bash\n$(v which --raw) $@")
 	if err := os.WriteFile(shimPath, shimContent, DEFAULT_PERMISSION); err != nil {
 		return err
 	}
@@ -99,18 +99,18 @@ func ListVersions(args []string, flags Flags, currentState State) error {
 	return nil
 }
 
-// Where prints out the system path to the executable being used by `python`.
-func Where(args []string, flags Flags, currentState State) error {
+// Which prints out the system path to the executable being used by `python`.
+func Which(args []string, flags Flags, currentState State) error {
 	selectedVersion, _ := DetermineSelectedPythonVersion(currentState)
 
 	var printedPath string
 
-	if selectedVersion == "SYSTEM" {
+	if selectedVersion.Source == "system" {
 		_, sysPath := DetermineSystemPython()
 		printedPath = fmt.Sprintf("%s (system)", sysPath)
 	} else {
-		tag := VersionStringToStruct(selectedVersion)
-		printedPath = GetStatePath("runtimes", fmt.Sprintf("py-%s", selectedVersion), "bin", fmt.Sprintf("python%s", tag.MajorMinor()))
+		tag := VersionStringToStruct(selectedVersion.Version)
+		printedPath = GetStatePath("runtimes", fmt.Sprintf("py-%s", selectedVersion.Version), "bin", fmt.Sprintf("python%s", tag.MajorMinor()))
 	}
 
 	prefix := "Python path: "
@@ -125,28 +125,17 @@ func Where(args []string, flags Flags, currentState State) error {
 	return nil
 }
 
-// Which prints out the Python version that will be used by shims. It can be invoked
-// directly by the `v which` command.
-//
-// If no version is set (i.e. none is installed, the specified version is not installed),
-// the system version is used and 'SYSTEM' is printed by Which.
-func Which(args []string, flags Flags, currentState State) error {
+// CurrentVersion (called via `v version`) outputs the currently selected version
+// and what configures it. If the version is configured by a file, the file is returned
+// under "source", if the system Python is used, "system" is returned as a source.
+func CurrentVersion(args []string, flags Flags, currentState State) error {
 	selectedVersion, _ := DetermineSelectedPythonVersion(currentState)
-	printedVersion := selectedVersion
-
-	if selectedVersion == "SYSTEM" {
-		sysVersion, _ := DetermineSystemPython()
-		printedVersion = fmt.Sprintf("%s (system)", sysVersion)
-	}
-
-	prefix := "Python version: "
 
 	if flags.RawOutput {
-		prefix = ""
-	} else {
-		printedVersion = Bold(printedVersion)
+		fmt.Println(selectedVersion.Version)
+		return nil
 	}
 
-	fmt.Printf("%s%s\n", prefix, printedVersion)
+	fmt.Printf("Python version: %s\nSource: %s\n", Bold(selectedVersion.Version), Bold(selectedVersion.Source))
 	return nil
 }

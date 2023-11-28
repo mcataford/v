@@ -4,13 +4,17 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"slices"
 	"strings"
 )
 
+type SelectedVersion struct {
+	Version string
+	Source  string
+}
+
 // SearchForPythonVersionFile crawls up to the system root to find any
 // .python-version file that could set the current version.
-func SearchForPythonVersionFile() (string, bool) {
+func SearchForPythonVersionFile() (SelectedVersion, bool) {
 	currentPath, _ := os.Getwd()
 	var versionFound string
 	for {
@@ -30,7 +34,11 @@ func SearchForPythonVersionFile() (string, bool) {
 		currentPath = nextPath
 	}
 
-	return versionFound, versionFound != ""
+	if versionFound == "" {
+		return SelectedVersion{}, false
+	}
+
+	return SelectedVersion{Version: versionFound, Source: path.Join(currentPath, ".python-version")}, true
 }
 
 // DetermineSelectedPythonVersion returns the Python runtime version that should be
@@ -40,7 +48,7 @@ func SearchForPythonVersionFile() (string, bool) {
 // file that would indicate which version is preferred. If none are found, the global
 // user-defined version (via `v use <version>`) is used. If there is none, the system
 // Python version is used.
-func DetermineSelectedPythonVersion(currentState State) (string, error) {
+func DetermineSelectedPythonVersion(currentState State) (SelectedVersion, error) {
 	pythonFileVersion, pythonFileVersionFound := SearchForPythonVersionFile()
 
 	if pythonFileVersionFound {
@@ -48,29 +56,17 @@ func DetermineSelectedPythonVersion(currentState State) (string, error) {
 	}
 
 	if len(currentState.GlobalVersion) != 0 {
-		return currentState.GlobalVersion, nil
+		return SelectedVersion{Version: currentState.GlobalVersion, Source: GetStatePath("state.json")}, nil
 	}
 
-	return "SYSTEM", nil
+	systemVersion, _ := DetermineSystemPython()
+	return SelectedVersion{Source: "system", Version: systemVersion}, nil
 }
 
 // DetermineSystemPython returns the unshimmed Python version and path.
-// This is done by inspected the output of `which` and `python --version` if v's shims
-// are not in $PATH.
+// It assumes that /bin/python is where system Python lives.
 func DetermineSystemPython() (string, string) {
-	currentPathEnv := os.Getenv("PATH")
-	pathWithoutShims := slices.DeleteFunc(strings.Split(currentPathEnv, ":"), func(element string) bool {
-		return element == GetStatePath("shims")
-	})
-
-	// FIXME: This should be set through RunCommand instead.
-	os.Setenv("PATH", strings.Join(pathWithoutShims, ":"))
-	defer os.Setenv("PATH", currentPathEnv)
-
-	whichOut, _ := RunCommand([]string{"which", "python"}, GetStatePath(), true)
-	versionOut, _ := RunCommand([]string{"python", "--version"}, GetStatePath(), true)
-
+	versionOut, _ := RunCommand([]string{"/bin/python", "--version"}, GetStatePath(), true)
 	detectedVersion, _ := strings.CutPrefix(versionOut, "Python")
-
-	return strings.TrimSpace(detectedVersion), strings.TrimSpace(whichOut)
+	return strings.TrimSpace(detectedVersion), "/bin/python"
 }
