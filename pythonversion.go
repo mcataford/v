@@ -12,6 +12,23 @@ type SelectedVersion struct {
 	Source  string
 }
 
+func ListInstalledVersions() ([]string, error) {
+	runtimesDir := GetStatePath("runtimes")
+	entries, err := os.ReadDir(runtimesDir)
+
+	if err != nil {
+		return []string{}, err
+	}
+
+	installedVersions := []string{}
+
+	for _, d := range entries {
+		installedVersions = append(installedVersions, strings.TrimPrefix(d.Name(), "py-"))
+	}
+
+	return installedVersions, nil
+}
+
 // SearchForPythonVersionFile crawls up to the system root to find any
 // .python-version file that could set the current version.
 func SearchForPythonVersionFile() (SelectedVersion, bool) {
