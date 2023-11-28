@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"slices"
 	"testing"
 )
 
@@ -131,5 +132,47 @@ func TestSearchForPythonVersionFileReturnsOnRootIfNoneFound(t *testing.T) {
 	if versionFound.Version != "" || found {
 		t.Errorf("Did not expect any result, found %s.", versionFound.Version)
 	}
+}
 
+func TestListInstalledVersion(t *testing.T) {
+	defer SetupAndCleanupEnvironment(t)()
+
+	versions := []string{"1.2.3", "4.5.6", "7.8.9"}
+
+	os.Mkdir(GetStatePath("runtimes"), 0750)
+	for _, version := range versions {
+		os.Mkdir(GetStatePath("runtimes", "py-"+version), 0750)
+	}
+
+	installedVersions, _ := ListInstalledVersions()
+
+	if !slices.Equal(installedVersions, versions) {
+		t.Errorf("Expected %s, got %s.", versions, installedVersions)
+	}
+}
+
+func TestListInstalledVersionNoVersionsInstalled(t *testing.T) {
+	defer SetupAndCleanupEnvironment(t)()
+
+	os.Mkdir(GetStatePath("runtimes"), 0750)
+
+	installedVersions, _ := ListInstalledVersions()
+
+	if len(installedVersions) != 0 {
+		t.Errorf("Expected 0 elements, got %d (%s).", len(installedVersions), installedVersions)
+	}
+}
+
+func TestListInstalledVersionNoRuntimesDir(t *testing.T) {
+	defer SetupAndCleanupEnvironment(t)()
+
+	installedVersions, err := ListInstalledVersions()
+
+	if len(installedVersions) != 0 {
+		t.Errorf("Expected 0 elements, got %d (%s).", len(installedVersions), installedVersions)
+	}
+
+	if err == nil {
+		t.Errorf("Expected error to be returned, got nil.")
+	}
 }
