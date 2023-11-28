@@ -56,7 +56,7 @@ func DetermineSelectedPythonVersion(currentState State) (SelectedVersion, error)
 	}
 
 	if len(currentState.GlobalVersion) != 0 {
-		return SelectedVersion{Version: currentState.GlobalVersion, Source: ""}, nil
+		return SelectedVersion{Version: currentState.GlobalVersion, Source: GetStatePath("state.json")}, nil
 	}
 
 	systemVersion, _ := DetermineSystemPython()

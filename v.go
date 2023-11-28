@@ -30,9 +30,9 @@ func main() {
 	).AddCommand(
 		"ls", ListVersions, "v ls", "Lists the installed Python versions.",
 	).AddCommand(
-		"where", Where, "v where", "Prints the path to the current Python version.",
+		"version", CurrentVersion, "v version", "Prints the current version and its source.",
 	).AddCommand(
-		"which", Which, "v which", "Prints the current Python version.",
+		"which", Which, "v which", "Prints the path to the current Python version.",
 	).AddCommand(
 		"init", Initialize, "v init", "Initializes the v state.",
 	).Run(args, currentState)
