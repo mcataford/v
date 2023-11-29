@@ -1,7 +1,5 @@
 package main
 
-import "fmt"
-
 const (
 	RESET  = "\033[0m"
 	BOLD   = "\033[1m"
@@ -9,9 +7,9 @@ const (
 )
 
 func Yellow(text string) string {
-	return fmt.Sprintf("%s%s%s", YELLOW, text, RESET)
+	return YELLOW + text + RESET
 }
 
 func Bold(text string) string {
-	return fmt.Sprintf("%s%s%s", BOLD, text, RESET)
+	return BOLD + text + RESET
 }

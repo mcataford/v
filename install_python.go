@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -27,7 +26,7 @@ type VersionTag struct {
 }
 
 func (t VersionTag) MajorMinor() string {
-	return fmt.Sprintf("%s.%s", t.Major, t.Minor)
+	return t.Major + "." + t.Minor
 }
 
 func InstallPythonDistribution(version string, noCache bool, verbose bool) error {
@@ -51,18 +50,21 @@ func InstallPythonDistribution(version string, noCache bool, verbose bool) error
 
 // Fetches the Python tarball for version <version> from python.org.
 func downloadSource(version string, skipCache bool) (PackageMetadata, error) {
-	archiveName := fmt.Sprintf("Python-%s.tgz", version)
+	archiveName := "Python-" + version + ".tgz"
 	archivePath := GetStatePath("cache", archiveName)
 	sourceUrl, _ := url.JoinPath(pythonReleasesBaseURL, version, archiveName)
 
 	client := http.Client{}
 
-	dlPrint := StartFmtGroup(fmt.Sprintf("Downloading source for Python %s", version))
+	InfoLogger.Println(Bold("Downloading source for Python " + version))
+	InfoLogger.SetPrefix("  ")
+	defer InfoLogger.SetPrefix("")
+
 	start := time.Now()
 	_, err := os.Stat(archivePath)
 
 	if errors.Is(err, os.ErrNotExist) || skipCache {
-		dlPrint(fmt.Sprintf("Fetching from %s", sourceUrl))
+		InfoLogger.Println("Fetching from " + sourceUrl)
 
 		resp, err := client.Get(sourceUrl)
 
@@ -76,18 +78,21 @@ func downloadSource(version string, skipCache bool) (PackageMetadata, error) {
 
 		defer file.Close()
 	} else {
-		dlPrint(fmt.Sprintf("Found in cache: %s", archivePath))
+		InfoLogger.Println("Found in cache: " + archivePath)
 	}
 
-	dlPrint(fmt.Sprintf("✅ Done (%s)", time.Since(start)))
+	InfoLogger.Printf("✅ Done (%s)\n", time.Since(start))
 	return PackageMetadata{ArchivePath: archivePath, Version: version}, nil
 }
 
 func buildFromSource(pkgMeta PackageMetadata, verbose bool) (PackageMetadata, error) {
-	buildPrint := StartFmtGroup(fmt.Sprintf("Building from source"))
+	InfoLogger.Println(Bold("Building from source"))
+	InfoLogger.SetPrefix("  ")
+	defer InfoLogger.SetPrefix("")
+
 	start := time.Now()
 
-	buildPrint(fmt.Sprintf("Unpacking source for %s", pkgMeta.ArchivePath))
+	InfoLogger.Println("Unpacking source for " + pkgMeta.ArchivePath)
 
 	_, untarErr := RunCommand([]string{"tar", "zxvf", pkgMeta.ArchivePath}, GetStatePath("cache"), !verbose)
 
@@ -97,17 +102,17 @@ func buildFromSource(pkgMeta PackageMetadata, verbose bool) (PackageMetadata, er
 
 	unzippedRoot := strings.TrimSuffix(pkgMeta.ArchivePath, path.Ext(pkgMeta.ArchivePath))
 
-	buildPrint("Configuring installer")
+	InfoLogger.Println("Configuring installer")
 
-	targetDirectory := GetStatePath("runtimes", fmt.Sprintf("py-%s", pkgMeta.Version))
+	targetDirectory := GetStatePath("runtimes", "py-"+pkgMeta.Version)
 
-	_, configureErr := RunCommand([]string{"./configure", fmt.Sprintf("--prefix=%s", targetDirectory), "--enable-optimizations"}, unzippedRoot, !verbose)
+	_, configureErr := RunCommand([]string{"./configure", "--prefix=" + targetDirectory, "--enable-optimizations"}, unzippedRoot, !verbose)
 
 	if configureErr != nil {
 		return pkgMeta, configureErr
 	}
 
-	buildPrint("Building")
+	InfoLogger.Println("Building")
 	_, buildErr := RunCommand([]string{"make", "altinstall", "-j4"}, unzippedRoot, !verbose)
 
 	if buildErr != nil {
@@ -120,7 +125,7 @@ func buildFromSource(pkgMeta PackageMetadata, verbose bool) (PackageMetadata, er
 
 	pkgMeta.InstallPath = targetDirectory
 
-	buildPrint(fmt.Sprintf("Installed Python %s at %s", pkgMeta.Version, pkgMeta.InstallPath))
-	buildPrint(fmt.Sprintf("✅ Done (%s)", time.Since(start)))
+	InfoLogger.Printf("Installed Python %s at %s\n", pkgMeta.Version, pkgMeta.InstallPath)
+	InfoLogger.Printf("✅ Done (%s)\n", time.Since(start))
 	return pkgMeta, nil
 }
