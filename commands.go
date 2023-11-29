@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"slices"
 )
@@ -32,7 +31,7 @@ func writeShim(shimPath string) error {
 // installed runtimes and metadata.
 func Initialize(args []string, flags Flags, currentState State) error {
 	if flags.AddPath {
-		fmt.Printf("export PATH=%s:$PATH\n", GetStatePath("shims"))
+		InfoLogger.Printf("export PATH=%s:$PATH\n", GetStatePath("shims"))
 		return nil
 	}
 
@@ -48,7 +47,7 @@ func Initialize(args []string, flags Flags, currentState State) error {
 	return nil
 }
 func UninstallPython(args []string, flags Flags, currentState State) error {
-	runtimePath := GetStatePath("runtimes", fmt.Sprintf("py-%s", args[1]))
+	runtimePath := GetStatePath("runtimes", "py-"+args[1])
 	err := os.RemoveAll(runtimePath)
 	return err
 }
@@ -76,12 +75,12 @@ func Use(args []string, flags Flags, currentState State) error {
 	}
 
 	if !found {
-		fmt.Println("Version not installed. Installing it first.")
+		InfoLogger.Println("Version not installed. Installing it first.")
 		InstallPythonDistribution(version, flags.NoCache, flags.Verbose)
 	}
 
 	WriteState(version)
-	fmt.Printf("Now using Python %s\n", version)
+	InfoLogger.Printf("Now using Python %s\n", version)
 
 	return nil
 }
@@ -93,12 +92,12 @@ func ListVersions(args []string, flags Flags, currentState State) error {
 	}
 
 	if len(installedVersions) == 0 {
-		fmt.Println("No versions installed!")
+		InfoLogger.Println("No versions installed!")
 		return nil
 	}
 
 	for _, d := range installedVersions {
-		fmt.Println(d)
+		InfoLogger.Println(d)
 	}
 
 	return nil
@@ -114,12 +113,12 @@ func Which(args []string, flags Flags, currentState State) error {
 
 	if selectedVersion.Source == "system" {
 		_, sysPath := DetermineSystemPython()
-		printedPath = fmt.Sprintf("%s (system)", sysPath)
+		printedPath = sysPath + " (system)"
 	} else if isInstalled {
 		tag := VersionStringToStruct(selectedVersion.Version)
-		printedPath = GetStatePath("runtimes", fmt.Sprintf("py-%s", selectedVersion.Version), "bin", fmt.Sprintf("python%s", tag.MajorMinor()))
+		printedPath = GetStatePath("runtimes", "py-"+selectedVersion.Version, "bin", "python"+tag.MajorMinor())
 	} else {
-		fmt.Printf("The desired version (%s) is not installed.\n", selectedVersion.Version)
+		InfoLogger.Printf("The desired version (%s) is not installed.\n", selectedVersion.Version)
 		return nil
 	}
 
@@ -131,7 +130,7 @@ func Which(args []string, flags Flags, currentState State) error {
 		printedPath = Bold(printedPath)
 	}
 
-	fmt.Printf("%s%s\n", prefix, printedPath)
+	InfoLogger.Printf("%s%s\n", prefix, printedPath)
 	return nil
 }
 
@@ -144,14 +143,14 @@ func CurrentVersion(args []string, flags Flags, currentState State) error {
 	isInstalled := slices.Contains(installedVersions, selectedVersion.Version)
 
 	if !isInstalled {
-		fmt.Println(Bold(Yellow("WARNING: This version is not installed.")))
+		InfoLogger.Println(Bold(Yellow("WARNING: This version is not installed.")))
 	}
 
 	if flags.RawOutput {
-		fmt.Println(selectedVersion.Version)
+		InfoLogger.Println(selectedVersion.Version)
 		return nil
 	}
 
-	fmt.Printf("Python version: %s\nSource: %s\n", Bold(selectedVersion.Version), Bold(selectedVersion.Source))
+	InfoLogger.Printf("Python version: %s\nSource: %s\n", Bold(selectedVersion.Version), Bold(selectedVersion.Source))
 	return nil
 }
