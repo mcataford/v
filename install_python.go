@@ -30,15 +30,12 @@ func (t VersionTag) MajorMinor() string {
 	return fmt.Sprintf("%s.%s", t.Major, t.Minor)
 }
 
-func InstallPython(args []string, flags Flags, currentState State) error {
-	verbose := flags.Verbose
-	version := args[1]
-
+func InstallPythonDistribution(version string, noCache bool, verbose bool) error {
 	if err := ValidateVersion(version); err != nil {
 		return err
 	}
 
-	packageMetadata, dlerr := downloadSource(version, flags.NoCache)
+	packageMetadata, dlerr := downloadSource(version, noCache)
 
 	if dlerr != nil {
 		return dlerr
