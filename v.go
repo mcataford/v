@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	cli "v/cli"
 	state "v/state"
 )
 
@@ -16,7 +17,7 @@ func main() {
 	args := os.Args[1:]
 	currentState := state.ReadState()
 
-	cli := CLI{
+	cli := cli.CLI{
 		Metadata: map[string]string{
 			"Version": Version,
 		},

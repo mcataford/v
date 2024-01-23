@@ -9,6 +9,7 @@ import (
 	"path"
 	"strings"
 	"time"
+	logger "v/logger"
 	state "v/state"
 )
 
@@ -57,15 +58,15 @@ func downloadSource(version string, skipCache bool) (PackageMetadata, error) {
 
 	client := http.Client{}
 
-	InfoLogger.Println(Bold("Downloading source for Python " + version))
-	InfoLogger.SetPrefix("  ")
-	defer InfoLogger.SetPrefix("")
+	logger.InfoLogger.Println(Bold("Downloading source for Python " + version))
+	logger.InfoLogger.SetPrefix("  ")
+	defer logger.InfoLogger.SetPrefix("")
 
 	start := time.Now()
 	_, err := os.Stat(archivePath)
 
 	if errors.Is(err, os.ErrNotExist) || skipCache {
-		InfoLogger.Println("Fetching from " + sourceUrl)
+		logger.InfoLogger.Println("Fetching from " + sourceUrl)
 
 		resp, err := client.Get(sourceUrl)
 
@@ -79,21 +80,21 @@ func downloadSource(version string, skipCache bool) (PackageMetadata, error) {
 
 		defer file.Close()
 	} else {
-		InfoLogger.Println("Found in cache: " + archivePath)
+		logger.InfoLogger.Println("Found in cache: " + archivePath)
 	}
 
-	InfoLogger.Printf("✅ Done (%s)\n", time.Since(start))
+	logger.InfoLogger.Printf("✅ Done (%s)\n", time.Since(start))
 	return PackageMetadata{ArchivePath: archivePath, Version: version}, nil
 }
 
 func buildFromSource(pkgMeta PackageMetadata, verbose bool) (PackageMetadata, error) {
-	InfoLogger.Println(Bold("Building from source"))
-	InfoLogger.SetPrefix("  ")
-	defer InfoLogger.SetPrefix("")
+	logger.InfoLogger.Println(Bold("Building from source"))
+	logger.InfoLogger.SetPrefix("  ")
+	defer logger.InfoLogger.SetPrefix("")
 
 	start := time.Now()
 
-	InfoLogger.Println("Unpacking source for " + pkgMeta.ArchivePath)
+	logger.InfoLogger.Println("Unpacking source for " + pkgMeta.ArchivePath)
 
 	_, untarErr := RunCommand([]string{"tar", "zxvf", pkgMeta.ArchivePath}, state.GetStatePath("cache"), !verbose)
 
@@ -103,7 +104,7 @@ func buildFromSource(pkgMeta PackageMetadata, verbose bool) (PackageMetadata, er
 
 	unzippedRoot := strings.TrimSuffix(pkgMeta.ArchivePath, path.Ext(pkgMeta.ArchivePath))
 
-	InfoLogger.Println("Configuring installer")
+	logger.InfoLogger.Println("Configuring installer")
 
 	targetDirectory := state.GetStatePath("runtimes", "py-"+pkgMeta.Version)
 
@@ -113,7 +114,7 @@ func buildFromSource(pkgMeta PackageMetadata, verbose bool) (PackageMetadata, er
 		return pkgMeta, configureErr
 	}
 
-	InfoLogger.Println("Building")
+	logger.InfoLogger.Println("Building")
 	_, buildErr := RunCommand([]string{"make", "altinstall", "-j4"}, unzippedRoot, !verbose)
 
 	if buildErr != nil {
@@ -126,7 +127,7 @@ func buildFromSource(pkgMeta PackageMetadata, verbose bool) (PackageMetadata, er
 
 	pkgMeta.InstallPath = targetDirectory
 
-	InfoLogger.Printf("Installed Python %s at %s\n", pkgMeta.Version, pkgMeta.InstallPath)
-	InfoLogger.Printf("✅ Done (%s)\n", time.Since(start))
+	logger.InfoLogger.Printf("Installed Python %s at %s\n", pkgMeta.Version, pkgMeta.InstallPath)
+	logger.InfoLogger.Printf("✅ Done (%s)\n", time.Since(start))
 	return pkgMeta, nil
 }
