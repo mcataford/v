@@ -9,6 +9,7 @@ import (
 	"path"
 	"strings"
 	"time"
+	state "v/state"
 )
 
 var pythonReleasesBaseURL = "https://www.python.org/ftp/python"
@@ -51,7 +52,7 @@ func InstallPythonDistribution(version string, noCache bool, verbose bool) error
 // Fetches the Python tarball for version <version> from python.org.
 func downloadSource(version string, skipCache bool) (PackageMetadata, error) {
 	archiveName := "Python-" + version + ".tgz"
-	archivePath := GetStatePath("cache", archiveName)
+	archivePath := state.GetStatePath("cache", archiveName)
 	sourceUrl, _ := url.JoinPath(pythonReleasesBaseURL, version, archiveName)
 
 	client := http.Client{}
@@ -94,7 +95,7 @@ func buildFromSource(pkgMeta PackageMetadata, verbose bool) (PackageMetadata, er
 
 	InfoLogger.Println("Unpacking source for " + pkgMeta.ArchivePath)
 
-	_, untarErr := RunCommand([]string{"tar", "zxvf", pkgMeta.ArchivePath}, GetStatePath("cache"), !verbose)
+	_, untarErr := RunCommand([]string{"tar", "zxvf", pkgMeta.ArchivePath}, state.GetStatePath("cache"), !verbose)
 
 	if untarErr != nil {
 		return pkgMeta, untarErr
@@ -104,7 +105,7 @@ func buildFromSource(pkgMeta PackageMetadata, verbose bool) (PackageMetadata, er
 
 	InfoLogger.Println("Configuring installer")
 
-	targetDirectory := GetStatePath("runtimes", "py-"+pkgMeta.Version)
+	targetDirectory := state.GetStatePath("runtimes", "py-"+pkgMeta.Version)
 
 	_, configureErr := RunCommand([]string{"./configure", "--prefix=" + targetDirectory, "--enable-optimizations"}, unzippedRoot, !verbose)
 

@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"slices"
+	state "v/state"
 )
 
 var DIRECTORIES = []string{
@@ -29,42 +30,42 @@ func writeShim(shimPath string) error {
 
 // Sets up directories and files used to store downloaded archives,
 // installed runtimes and metadata.
-func Initialize(args []string, flags Flags, currentState State) error {
+func Initialize(args []string, flags Flags, currentState state.State) error {
 	if flags.AddPath {
-		InfoLogger.Printf("export PATH=%s:$PATH\n", GetStatePath("shims"))
+		InfoLogger.Printf("export PATH=%s:$PATH\n", state.GetStatePath("shims"))
 		return nil
 	}
 
-	os.Mkdir(GetStatePath(), DEFAULT_PERMISSION)
+	os.Mkdir(state.GetStatePath(), DEFAULT_PERMISSION)
 	for _, dir := range DIRECTORIES {
-		os.Mkdir(GetStatePath(dir), DEFAULT_PERMISSION)
+		os.Mkdir(state.GetStatePath(dir), DEFAULT_PERMISSION)
 	}
 
 	for _, shim := range SHIMS {
-		writeShim(GetStatePath("shims", shim))
+		writeShim(state.GetStatePath("shims", shim))
 	}
 
 	return nil
 }
-func UninstallPython(args []string, flags Flags, currentState State) error {
-	runtimePath := GetStatePath("runtimes", "py-"+args[1])
+func UninstallPython(args []string, flags Flags, currentState state.State) error {
+	runtimePath := state.GetStatePath("runtimes", "py-"+args[1])
 	err := os.RemoveAll(runtimePath)
 	return err
 }
 
-func InstallPython(args []string, flags Flags, currentState State) error {
+func InstallPython(args []string, flags Flags, currentState state.State) error {
 	version := args[1]
 
 	return InstallPythonDistribution(version, flags.NoCache, flags.Verbose)
 }
 
-func Use(args []string, flags Flags, currentState State) error {
+func Use(args []string, flags Flags, currentState state.State) error {
 	version := args[1]
 	if err := ValidateVersion(version); err != nil {
 		return err
 	}
 
-	availableVersions := GetAvailableVersions()
+	availableVersions := state.GetAvailableVersions()
 
 	found := false
 	for _, v := range availableVersions {
@@ -79,12 +80,12 @@ func Use(args []string, flags Flags, currentState State) error {
 		InstallPythonDistribution(version, flags.NoCache, flags.Verbose)
 	}
 
-	WriteState(version)
+	state.WriteState(version)
 	InfoLogger.Printf("Now using Python %s\n", version)
 
 	return nil
 }
-func ListVersions(args []string, flags Flags, currentState State) error {
+func ListVersions(args []string, flags Flags, currentState state.State) error {
 	installedVersions, err := ListInstalledVersions()
 
 	if err != nil {
@@ -104,7 +105,7 @@ func ListVersions(args []string, flags Flags, currentState State) error {
 }
 
 // Which prints out the system path to the executable being used by `python`.
-func Which(args []string, flags Flags, currentState State) error {
+func Which(args []string, flags Flags, currentState state.State) error {
 	selectedVersion, _ := DetermineSelectedPythonVersion(currentState)
 	installedVersions, _ := ListInstalledVersions()
 	isInstalled := slices.Contains(installedVersions, selectedVersion.Version)
@@ -116,7 +117,7 @@ func Which(args []string, flags Flags, currentState State) error {
 		printedPath = sysPath + " (system)"
 	} else if isInstalled {
 		tag := VersionStringToStruct(selectedVersion.Version)
-		printedPath = GetStatePath("runtimes", "py-"+selectedVersion.Version, "bin", "python"+tag.MajorMinor())
+		printedPath = state.GetStatePath("runtimes", "py-"+selectedVersion.Version, "bin", "python"+tag.MajorMinor())
 	} else {
 		InfoLogger.Printf("The desired version (%s) is not installed.\n", selectedVersion.Version)
 		return nil
@@ -137,7 +138,7 @@ func Which(args []string, flags Flags, currentState State) error {
 // CurrentVersion (called via `v version`) outputs the currently selected version
 // and what configures it. If the version is configured by a file, the file is returned
 // under "source", if the system Python is used, "system" is returned as a source.
-func CurrentVersion(args []string, flags Flags, currentState State) error {
+func CurrentVersion(args []string, flags Flags, currentState state.State) error {
 	selectedVersion, _ := DetermineSelectedPythonVersion(currentState)
 	installedVersions, _ := ListInstalledVersions()
 	isInstalled := slices.Contains(installedVersions, selectedVersion.Version)

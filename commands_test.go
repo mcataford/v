@@ -5,18 +5,19 @@ import (
 	"os"
 	"strings"
 	"testing"
+	state "v/state"
 )
 
 func TestListVersionOutputsNoticeIfNoVersionsInstalled(t *testing.T) {
 	defer SetupAndCleanupEnvironment(t)()
 
-	os.Mkdir(GetStatePath("runtimes"), 0750)
+	os.Mkdir(state.GetStatePath("runtimes"), 0750)
 	var out bytes.Buffer
 
 	InfoLogger.SetOutput(&out)
 	defer InfoLogger.SetOutput(os.Stdout)
 
-	ListVersions([]string{}, Flags{}, State{})
+	ListVersions([]string{}, Flags{}, state.State{})
 
 	captured := out.String()
 	if captured != "No versions installed!\n" {
@@ -27,13 +28,13 @@ func TestListVersionOutputsNoticeIfNoVersionsInstalled(t *testing.T) {
 func TestListVersionOutputsVersionsInstalled(t *testing.T) {
 	defer SetupAndCleanupEnvironment(t)()
 
-	os.MkdirAll(GetStatePath("runtimes", "py-1.2.3"), 0750)
+	os.MkdirAll(state.GetStatePath("runtimes", "py-1.2.3"), 0750)
 	var out bytes.Buffer
 
 	InfoLogger.SetOutput(&out)
 	defer InfoLogger.SetOutput(os.Stdout)
 
-	ListVersions([]string{}, Flags{}, State{})
+	ListVersions([]string{}, Flags{}, state.State{})
 
 	captured := out.String()
 	if captured != "1.2.3\n" {
@@ -49,7 +50,7 @@ func TestListVersionReturnsErrorOnFailure(t *testing.T) {
 	InfoLogger.SetOutput(&out)
 	defer InfoLogger.SetOutput(os.Stdout)
 
-	err := ListVersions([]string{}, Flags{}, State{})
+	err := ListVersions([]string{}, Flags{}, state.State{})
 
 	captured := out.String()
 	if captured != "" {
@@ -69,7 +70,7 @@ func TestListVersionOutputsVersionSelectedAndWarnsNotInstalled(t *testing.T) {
 	InfoLogger.SetOutput(&out)
 	defer InfoLogger.SetOutput(os.Stdout)
 
-	Which([]string{}, Flags{}, State{GlobalVersion: "1.2.3"})
+	Which([]string{}, Flags{}, state.State{GlobalVersion: "1.2.3"})
 
 	captured := out.String()
 	if captured != "The desired version (1.2.3) is not installed.\n" {
@@ -85,11 +86,11 @@ func TestWhichOutputsVersionSelectedIfInstalled(t *testing.T) {
 	InfoLogger.SetOutput(&out)
 	defer InfoLogger.SetOutput(os.Stdout)
 
-	os.MkdirAll(GetStatePath("runtimes", "py-1.2.3"), 0750)
-	Which([]string{}, Flags{}, State{GlobalVersion: "1.2.3"})
+	os.MkdirAll(state.GetStatePath("runtimes", "py-1.2.3"), 0750)
+	Which([]string{}, Flags{}, state.State{GlobalVersion: "1.2.3"})
 
 	captured := strings.TrimSpace(out.String())
-	expected := GetStatePath("runtimes", "py-1.2.3", "bin", "python1.2")
+	expected := state.GetStatePath("runtimes", "py-1.2.3", "bin", "python1.2")
 	if !strings.Contains(captured, expected) {
 		t.Errorf("Unexpected message: %s, not %s", captured, expected)
 	}
@@ -103,7 +104,7 @@ func TestWhichOutputsSystemVersionIfNoneSelected(t *testing.T) {
 	InfoLogger.SetOutput(&out)
 	defer InfoLogger.SetOutput(os.Stdout)
 
-	Which([]string{}, Flags{RawOutput: true}, State{})
+	Which([]string{}, Flags{RawOutput: true}, state.State{})
 
 	captured := strings.TrimSpace(out.String())
 
@@ -120,11 +121,11 @@ func TestWhichOutputsVersionWithoutPrefixesIfRawOutput(t *testing.T) {
 	InfoLogger.SetOutput(&out)
 	defer InfoLogger.SetOutput(os.Stdout)
 
-	os.MkdirAll(GetStatePath("runtimes", "py-1.2.3"), 0750)
-	Which([]string{}, Flags{RawOutput: true}, State{GlobalVersion: "1.2.3"})
+	os.MkdirAll(state.GetStatePath("runtimes", "py-1.2.3"), 0750)
+	Which([]string{}, Flags{RawOutput: true}, state.State{GlobalVersion: "1.2.3"})
 
 	captured := strings.TrimSpace(out.String())
-	expected := GetStatePath("runtimes", "py-1.2.3", "bin", "python1.2")
+	expected := state.GetStatePath("runtimes", "py-1.2.3", "bin", "python1.2")
 	if captured != expected {
 		t.Errorf("Unexpected message: %s, not %s", captured, expected)
 	}

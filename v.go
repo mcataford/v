@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	state "v/state"
 )
 
 const (
@@ -13,7 +14,7 @@ const (
 // Main entrypoint.
 func main() {
 	args := os.Args[1:]
-	currentState := ReadState()
+	currentState := state.ReadState()
 
 	cli := CLI{
 		Metadata: map[string]string{
