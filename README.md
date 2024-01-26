@@ -36,7 +36,7 @@ This will handle adding shim paths to your shell without hassle.
 
 `v` will print a helpful list of available commands.
 
-The most important things to know include `v install <version>` to install new versions and `v use <installed version>` to use a specific version of Python.
+The most important things to know include `v python install <version>` to install new versions and `v python use <installed version>` to use a specific version of Python.
 
 ## Contributing
 

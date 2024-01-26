@@ -23,28 +23,13 @@ func main() {
 		"init", Initialize, "v init", "Initializes the v state.",
 	)
 
-	pythonCommands := cli.Namespace{Label: "python"}
-	pythonCommands.AddCommand(
-		"install", python.InstallPython, "v python install <version>", "Downloads, builds and installs a new version of Python.",
-	).AddCommand(
-		"uninstall", python.UninstallPython, "v python uninstall <version>", "Uninstalls the given Python version.",
-	).AddCommand(
-		"use", python.Use, "v python use <version>", "Selects which Python version to use.",
-	).AddCommand(
-		"ls", python.ListVersions, "v python ls", "Lists the installed Python versions.",
-	).AddCommand(
-		"version", python.CurrentVersion, "v python version", "Prints the current version and its source.",
-	).AddCommand(
-		"which", python.Which, "v python which", "Prints the path to the current Python version.",
-	)
-
 	cli := cli.CLI{
 		Metadata: map[string]string{
 			"Version": Version,
 		},
 	}
 
-	cli.AddNamespace(root).AddNamespace(pythonCommands)
+	cli.AddNamespace(root).AddNamespace(python.GetNamespace())
 
 	err := cli.Run(args, currentState)
 
