@@ -1,11 +1,28 @@
-package main
+package python
 
 import (
+	"errors"
 	"io/ioutil"
 	"os"
 	"path"
 	"strings"
+	exec "v/exec"
+	state "v/state"
 )
+
+func VersionStringToStruct(version string) VersionTag {
+	splitVersion := strings.Split(version, ".")
+
+	return VersionTag{Major: splitVersion[0], Minor: splitVersion[1], Patch: splitVersion[2]}
+}
+
+func ValidateVersion(version string) error {
+	if splitVersion := strings.Split(version, "."); len(splitVersion) != 3 {
+		return errors.New("Invalid version string. Expected format 'a.b.c'.")
+	}
+
+	return nil
+}
 
 type SelectedVersion struct {
 	Version string
@@ -13,7 +30,7 @@ type SelectedVersion struct {
 }
 
 func ListInstalledVersions() ([]string, error) {
-	runtimesDir := GetStatePath("runtimes")
+	runtimesDir := state.GetStatePath("runtimes")
 	entries, err := os.ReadDir(runtimesDir)
 
 	if err != nil {
@@ -65,7 +82,7 @@ func SearchForPythonVersionFile() (SelectedVersion, bool) {
 // file that would indicate which version is preferred. If none are found, the global
 // user-defined version (via `v use <version>`) is used. If there is none, the system
 // Python version is used.
-func DetermineSelectedPythonVersion(currentState State) (SelectedVersion, error) {
+func DetermineSelectedPythonVersion(currentState state.State) (SelectedVersion, error) {
 	pythonFileVersion, pythonFileVersionFound := SearchForPythonVersionFile()
 
 	if pythonFileVersionFound {
@@ -73,7 +90,7 @@ func DetermineSelectedPythonVersion(currentState State) (SelectedVersion, error)
 	}
 
 	if len(currentState.GlobalVersion) != 0 {
-		return SelectedVersion{Version: currentState.GlobalVersion, Source: GetStatePath("state.json")}, nil
+		return SelectedVersion{Version: currentState.GlobalVersion, Source: state.GetStatePath("state.json")}, nil
 	}
 
 	systemVersion, _ := DetermineSystemPython()
@@ -83,7 +100,7 @@ func DetermineSelectedPythonVersion(currentState State) (SelectedVersion, error)
 // DetermineSystemPython returns the unshimmed Python version and path.
 // It assumes that /bin/python is where system Python lives.
 func DetermineSystemPython() (string, string) {
-	versionOut, _ := RunCommand([]string{"/bin/python", "--version"}, GetStatePath(), true)
+	versionOut, _ := exec.RunCommand([]string{"/bin/python", "--version"}, state.GetStatePath(), true)
 	detectedVersion, _ := strings.CutPrefix(versionOut, "Python")
 	return strings.TrimSpace(detectedVersion), "/bin/python"
 }

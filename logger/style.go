@@ -1,4 +1,4 @@
-package main
+package logger
 
 const (
 	RESET  = "\033[0m"

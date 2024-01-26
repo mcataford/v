@@ -1,4 +1,4 @@
-package main
+package python
 
 import (
 	"encoding/json"
@@ -8,33 +8,19 @@ import (
 	"path"
 	"slices"
 	"testing"
+	state "v/state"
+	testutils "v/testutils"
 )
 
-// SetupAndCleanupEnvironment sets up a test directory and
-// environment variables before the test and returns a cleanup
-// function that can be deferred to cleanup any changes to the
-// system.
-func SetupAndCleanupEnvironment(t *testing.T) func() {
-	os.Setenv("V_ROOT", t.TempDir())
-
-	temporaryWd := t.TempDir()
-
-	os.Chdir(temporaryWd)
-
-	return func() {
-		os.Unsetenv("V_ROOT")
-	}
-}
-
 func TestDetermineSystemPythonGetsUnshimmedPythonRuntime(t *testing.T) {
-	defer SetupAndCleanupEnvironment(t)()
+	defer testutils.SetupAndCleanupEnvironment(t)()
 
-	ioutil.WriteFile(GetStatePath("shims", "python"), []byte("#!/bin/bash\necho \"Python 4.5.6\""), 0777)
+	ioutil.WriteFile(state.GetStatePath("shims", "python"), []byte("#!/bin/bash\necho \"Python 4.5.6\""), 0777)
 	mockSystemPythonPath := t.TempDir()
 	mockSystemPythonExecPath := path.Join(mockSystemPythonPath, "python")
 
 	oldPath := os.Getenv("PATH")
-	os.Setenv("PATH", fmt.Sprintf("%s:/usr/bin", GetStatePath("shims")))
+	os.Setenv("PATH", fmt.Sprintf("%s:/usr/bin", state.GetStatePath("shims")))
 	defer os.Setenv("PATH", oldPath)
 	sysVersion, sysPath := DetermineSystemPython()
 
@@ -48,11 +34,11 @@ func TestDetermineSystemPythonGetsUnshimmedPythonRuntime(t *testing.T) {
 }
 
 func TestDetermineSelectedPythonVersionUsesPythonVersionFileIfFound(t *testing.T) {
-	defer SetupAndCleanupEnvironment(t)()
+	defer testutils.SetupAndCleanupEnvironment(t)()
 
 	// Writing a mock user-defined state.
-	mockState := State{GlobalVersion: "1.0.0"}
-	statePath := GetStatePath("state.json")
+	mockState := state.State{GlobalVersion: "1.0.0"}
+	statePath := state.GetStatePath("state.json")
 	stateData, _ := json.Marshal(mockState)
 	ioutil.WriteFile(statePath, stateData, 0750)
 
@@ -60,7 +46,7 @@ func TestDetermineSelectedPythonVersionUsesPythonVersionFileIfFound(t *testing.T
 	os.Chdir(temporaryWd)
 	ioutil.WriteFile(path.Join(temporaryWd, ".python-version"), []byte("1.2.3"), 0750)
 
-	version, err := DetermineSelectedPythonVersion(ReadState())
+	version, err := DetermineSelectedPythonVersion(state.ReadState())
 
 	if err != nil || version.Version != "1.2.3" {
 		t.Errorf("Expected version to be %s, got %s instead.", "1.2.3", version.Version)
@@ -68,15 +54,15 @@ func TestDetermineSelectedPythonVersionUsesPythonVersionFileIfFound(t *testing.T
 }
 
 func TestDetermineSelectedPythonVersionGetsUserDefinedVersion(t *testing.T) {
-	defer SetupAndCleanupEnvironment(t)()
+	defer testutils.SetupAndCleanupEnvironment(t)()
 
 	// Writing a mock user-defined state.
-	mockState := State{GlobalVersion: "1.0.0"}
-	statePath := GetStatePath("state.json")
+	mockState := state.State{GlobalVersion: "1.0.0"}
+	statePath := state.GetStatePath("state.json")
 	stateData, _ := json.Marshal(mockState)
 	ioutil.WriteFile(statePath, stateData, 0750)
 
-	version, err := DetermineSelectedPythonVersion(ReadState())
+	version, err := DetermineSelectedPythonVersion(state.ReadState())
 
 	if err != nil || version.Version != mockState.GlobalVersion {
 		t.Errorf("Expected version to be %s, got %s instead.", mockState.GlobalVersion, version)
@@ -84,9 +70,9 @@ func TestDetermineSelectedPythonVersionGetsUserDefinedVersion(t *testing.T) {
 }
 
 func TestDetermineSelectedPythonVersionDefaultsToSystem(t *testing.T) {
-	defer SetupAndCleanupEnvironment(t)()
+	defer testutils.SetupAndCleanupEnvironment(t)()
 
-	version, err := DetermineSelectedPythonVersion(ReadState())
+	version, err := DetermineSelectedPythonVersion(state.ReadState())
 
 	if err != nil || version.Source != "system" {
 		t.Errorf("Expected version to be 'SYSTEM', got %s instead.", version)
@@ -94,7 +80,7 @@ func TestDetermineSelectedPythonVersionDefaultsToSystem(t *testing.T) {
 }
 
 func TestSearchForPythonVersionFileFindsFileInCwd(t *testing.T) {
-	defer SetupAndCleanupEnvironment(t)()
+	defer testutils.SetupAndCleanupEnvironment(t)()
 
 	temporaryWd := t.TempDir()
 	os.Chdir(temporaryWd)
@@ -108,7 +94,7 @@ func TestSearchForPythonVersionFileFindsFileInCwd(t *testing.T) {
 }
 
 func TestSearchForPythonVersionFileFindsFileInParents(t *testing.T) {
-	defer SetupAndCleanupEnvironment(t)()
+	defer testutils.SetupAndCleanupEnvironment(t)()
 
 	temporaryWd := t.TempDir()
 
@@ -125,7 +111,7 @@ func TestSearchForPythonVersionFileFindsFileInParents(t *testing.T) {
 }
 
 func TestSearchForPythonVersionFileReturnsOnRootIfNoneFound(t *testing.T) {
-	defer SetupAndCleanupEnvironment(t)()
+	defer testutils.SetupAndCleanupEnvironment(t)()
 
 	versionFound, found := SearchForPythonVersionFile()
 
@@ -135,13 +121,13 @@ func TestSearchForPythonVersionFileReturnsOnRootIfNoneFound(t *testing.T) {
 }
 
 func TestListInstalledVersion(t *testing.T) {
-	defer SetupAndCleanupEnvironment(t)()
+	defer testutils.SetupAndCleanupEnvironment(t)()
 
 	versions := []string{"1.2.3", "4.5.6", "7.8.9"}
 
-	os.Mkdir(GetStatePath("runtimes"), 0750)
+	os.Mkdir(state.GetStatePath("runtimes"), 0750)
 	for _, version := range versions {
-		os.Mkdir(GetStatePath("runtimes", "py-"+version), 0750)
+		os.Mkdir(state.GetStatePath("runtimes", "py-"+version), 0750)
 	}
 
 	installedVersions, _ := ListInstalledVersions()
@@ -152,9 +138,9 @@ func TestListInstalledVersion(t *testing.T) {
 }
 
 func TestListInstalledVersionNoVersionsInstalled(t *testing.T) {
-	defer SetupAndCleanupEnvironment(t)()
+	defer testutils.SetupAndCleanupEnvironment(t)()
 
-	os.Mkdir(GetStatePath("runtimes"), 0750)
+	os.Mkdir(state.GetStatePath("runtimes"), 0750)
 
 	installedVersions, _ := ListInstalledVersions()
 
@@ -164,7 +150,7 @@ func TestListInstalledVersionNoVersionsInstalled(t *testing.T) {
 }
 
 func TestListInstalledVersionNoRuntimesDir(t *testing.T) {
-	defer SetupAndCleanupEnvironment(t)()
+	defer testutils.SetupAndCleanupEnvironment(t)()
 
 	installedVersions, err := ListInstalledVersions()
 

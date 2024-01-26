@@ -2,6 +2,9 @@ package main
 
 import (
 	"os"
+	cli "v/cli"
+	python "v/python"
+	state "v/state"
 )
 
 const (
@@ -13,26 +16,26 @@ const (
 // Main entrypoint.
 func main() {
 	args := os.Args[1:]
-	currentState := ReadState()
+	currentState := state.ReadState()
 
-	cli := CLI{
+	cli := cli.CLI{
 		Metadata: map[string]string{
 			"Version": Version,
 		},
 	}
 
 	err := cli.AddCommand(
-		"install", InstallPython, "v install <version>", "Downloads, builds and installs a new version of Python.",
+		"install", python.InstallPython, "v install <version>", "Downloads, builds and installs a new version of Python.",
 	).AddCommand(
-		"uninstall", UninstallPython, "v uninstall <version>", "Uninstalls the given Python version.",
+		"uninstall", python.UninstallPython, "v uninstall <version>", "Uninstalls the given Python version.",
 	).AddCommand(
-		"use", Use, "v use <version>", "Selects which Python version to use.",
+		"use", python.Use, "v use <version>", "Selects which Python version to use.",
 	).AddCommand(
-		"ls", ListVersions, "v ls", "Lists the installed Python versions.",
+		"ls", python.ListVersions, "v ls", "Lists the installed Python versions.",
 	).AddCommand(
-		"version", CurrentVersion, "v version", "Prints the current version and its source.",
+		"version", python.CurrentVersion, "v version", "Prints the current version and its source.",
 	).AddCommand(
-		"which", Which, "v which", "Prints the path to the current Python version.",
+		"which", python.Which, "v which", "Prints the path to the current Python version.",
 	).AddCommand(
 		"init", Initialize, "v init", "Initializes the v state.",
 	).Run(args, currentState)

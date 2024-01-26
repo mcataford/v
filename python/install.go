@@ -1,4 +1,4 @@
-package main
+package python
 
 import (
 	"errors"
@@ -9,6 +9,9 @@ import (
 	"path"
 	"strings"
 	"time"
+	exec "v/exec"
+	logger "v/logger"
+	state "v/state"
 )
 
 var pythonReleasesBaseURL = "https://www.python.org/ftp/python"
@@ -51,20 +54,20 @@ func InstallPythonDistribution(version string, noCache bool, verbose bool) error
 // Fetches the Python tarball for version <version> from python.org.
 func downloadSource(version string, skipCache bool) (PackageMetadata, error) {
 	archiveName := "Python-" + version + ".tgz"
-	archivePath := GetStatePath("cache", archiveName)
+	archivePath := state.GetStatePath("cache", archiveName)
 	sourceUrl, _ := url.JoinPath(pythonReleasesBaseURL, version, archiveName)
 
 	client := http.Client{}
 
-	InfoLogger.Println(Bold("Downloading source for Python " + version))
-	InfoLogger.SetPrefix("  ")
-	defer InfoLogger.SetPrefix("")
+	logger.InfoLogger.Println(logger.Bold("Downloading source for Python " + version))
+	logger.InfoLogger.SetPrefix("  ")
+	defer logger.InfoLogger.SetPrefix("")
 
 	start := time.Now()
 	_, err := os.Stat(archivePath)
 
 	if errors.Is(err, os.ErrNotExist) || skipCache {
-		InfoLogger.Println("Fetching from " + sourceUrl)
+		logger.InfoLogger.Println("Fetching from " + sourceUrl)
 
 		resp, err := client.Get(sourceUrl)
 
@@ -78,23 +81,23 @@ func downloadSource(version string, skipCache bool) (PackageMetadata, error) {
 
 		defer file.Close()
 	} else {
-		InfoLogger.Println("Found in cache: " + archivePath)
+		logger.InfoLogger.Println("Found in cache: " + archivePath)
 	}
 
-	InfoLogger.Printf("✅ Done (%s)\n", time.Since(start))
+	logger.InfoLogger.Printf("✅ Done (%s)\n", time.Since(start))
 	return PackageMetadata{ArchivePath: archivePath, Version: version}, nil
 }
 
 func buildFromSource(pkgMeta PackageMetadata, verbose bool) (PackageMetadata, error) {
-	InfoLogger.Println(Bold("Building from source"))
-	InfoLogger.SetPrefix("  ")
-	defer InfoLogger.SetPrefix("")
+	logger.InfoLogger.Println(logger.Bold("Building from source"))
+	logger.InfoLogger.SetPrefix("  ")
+	defer logger.InfoLogger.SetPrefix("")
 
 	start := time.Now()
 
-	InfoLogger.Println("Unpacking source for " + pkgMeta.ArchivePath)
+	logger.InfoLogger.Println("Unpacking source for " + pkgMeta.ArchivePath)
 
-	_, untarErr := RunCommand([]string{"tar", "zxvf", pkgMeta.ArchivePath}, GetStatePath("cache"), !verbose)
+	_, untarErr := exec.RunCommand([]string{"tar", "zxvf", pkgMeta.ArchivePath}, state.GetStatePath("cache"), !verbose)
 
 	if untarErr != nil {
 		return pkgMeta, untarErr
@@ -102,18 +105,18 @@ func buildFromSource(pkgMeta PackageMetadata, verbose bool) (PackageMetadata, er
 
 	unzippedRoot := strings.TrimSuffix(pkgMeta.ArchivePath, path.Ext(pkgMeta.ArchivePath))
 
-	InfoLogger.Println("Configuring installer")
+	logger.InfoLogger.Println("Configuring installer")
 
-	targetDirectory := GetStatePath("runtimes", "py-"+pkgMeta.Version)
+	targetDirectory := state.GetStatePath("runtimes", "py-"+pkgMeta.Version)
 
-	_, configureErr := RunCommand([]string{"./configure", "--prefix=" + targetDirectory, "--enable-optimizations"}, unzippedRoot, !verbose)
+	_, configureErr := exec.RunCommand([]string{"./configure", "--prefix=" + targetDirectory, "--enable-optimizations"}, unzippedRoot, !verbose)
 
 	if configureErr != nil {
 		return pkgMeta, configureErr
 	}
 
-	InfoLogger.Println("Building")
-	_, buildErr := RunCommand([]string{"make", "altinstall", "-j4"}, unzippedRoot, !verbose)
+	logger.InfoLogger.Println("Building")
+	_, buildErr := exec.RunCommand([]string{"make", "altinstall", "-j4"}, unzippedRoot, !verbose)
 
 	if buildErr != nil {
 		return pkgMeta, buildErr
@@ -125,7 +128,7 @@ func buildFromSource(pkgMeta PackageMetadata, verbose bool) (PackageMetadata, er
 
 	pkgMeta.InstallPath = targetDirectory
 
-	InfoLogger.Printf("Installed Python %s at %s\n", pkgMeta.Version, pkgMeta.InstallPath)
-	InfoLogger.Printf("✅ Done (%s)\n", time.Since(start))
+	logger.InfoLogger.Printf("Installed Python %s at %s\n", pkgMeta.Version, pkgMeta.InstallPath)
+	logger.InfoLogger.Printf("✅ Done (%s)\n", time.Since(start))
 	return pkgMeta, nil
 }
