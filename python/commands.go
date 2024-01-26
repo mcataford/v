@@ -8,19 +8,19 @@ import (
 	state "v/state"
 )
 
-func UninstallPython(args []string, flags cli.Flags, currentState state.State) error {
+func uninstallPython(args []string, flags cli.Flags, currentState state.State) error {
 	runtimePath := state.GetStatePath("runtimes", "py-"+args[1])
 	err := os.RemoveAll(runtimePath)
 	return err
 }
 
-func InstallPython(args []string, flags cli.Flags, currentState state.State) error {
+func installPython(args []string, flags cli.Flags, currentState state.State) error {
 	version := args[1]
 
 	return InstallPythonDistribution(version, flags.NoCache, flags.Verbose)
 }
 
-func Use(args []string, flags cli.Flags, currentState state.State) error {
+func use(args []string, flags cli.Flags, currentState state.State) error {
 	version := args[1]
 	if err := ValidateVersion(version); err != nil {
 		return err
@@ -47,7 +47,7 @@ func Use(args []string, flags cli.Flags, currentState state.State) error {
 	return nil
 }
 
-func ListVersions(args []string, flags cli.Flags, currentState state.State) error {
+func listVersions(args []string, flags cli.Flags, currentState state.State) error {
 	installedVersions, err := ListInstalledVersions()
 
 	if err != nil {
@@ -67,7 +67,7 @@ func ListVersions(args []string, flags cli.Flags, currentState state.State) erro
 }
 
 // Which prints out the system path to the executable being used by `python`.
-func Which(args []string, flags cli.Flags, currentState state.State) error {
+func which(args []string, flags cli.Flags, currentState state.State) error {
 	selectedVersion, _ := DetermineSelectedPythonVersion(currentState)
 	installedVersions, _ := ListInstalledVersions()
 	isInstalled := slices.Contains(installedVersions, selectedVersion.Version)
@@ -100,7 +100,7 @@ func Which(args []string, flags cli.Flags, currentState state.State) error {
 // CurrentVersion (called via `v version`) outputs the currently selected version
 // and what configures it. If the version is configured by a file, the file is returned
 // under "source", if the system Python is used, "system" is returned as a source.
-func CurrentVersion(args []string, flags cli.Flags, currentState state.State) error {
+func currentVersion(args []string, flags cli.Flags, currentState state.State) error {
 	selectedVersion, _ := DetermineSelectedPythonVersion(currentState)
 	installedVersions, _ := ListInstalledVersions()
 	isInstalled := slices.Contains(installedVersions, selectedVersion.Version)
