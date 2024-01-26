@@ -1,12 +1,28 @@
-package main
+package python
 
 import (
+	"errors"
 	"io/ioutil"
 	"os"
 	"path"
 	"strings"
+	exec "v/exec"
 	state "v/state"
 )
+
+func VersionStringToStruct(version string) VersionTag {
+	splitVersion := strings.Split(version, ".")
+
+	return VersionTag{Major: splitVersion[0], Minor: splitVersion[1], Patch: splitVersion[2]}
+}
+
+func ValidateVersion(version string) error {
+	if splitVersion := strings.Split(version, "."); len(splitVersion) != 3 {
+		return errors.New("Invalid version string. Expected format 'a.b.c'.")
+	}
+
+	return nil
+}
 
 type SelectedVersion struct {
 	Version string
@@ -84,7 +100,7 @@ func DetermineSelectedPythonVersion(currentState state.State) (SelectedVersion, 
 // DetermineSystemPython returns the unshimmed Python version and path.
 // It assumes that /bin/python is where system Python lives.
 func DetermineSystemPython() (string, string) {
-	versionOut, _ := RunCommand([]string{"/bin/python", "--version"}, state.GetStatePath(), true)
+	versionOut, _ := exec.RunCommand([]string{"/bin/python", "--version"}, state.GetStatePath(), true)
 	detectedVersion, _ := strings.CutPrefix(versionOut, "Python")
 	return strings.TrimSpace(detectedVersion), "/bin/python"
 }

@@ -1,4 +1,4 @@
-package main
+package python
 
 import (
 	"errors"
@@ -9,6 +9,7 @@ import (
 	"path"
 	"strings"
 	"time"
+	exec "v/exec"
 	logger "v/logger"
 	state "v/state"
 )
@@ -58,7 +59,7 @@ func downloadSource(version string, skipCache bool) (PackageMetadata, error) {
 
 	client := http.Client{}
 
-	logger.InfoLogger.Println(Bold("Downloading source for Python " + version))
+	logger.InfoLogger.Println(logger.Bold("Downloading source for Python " + version))
 	logger.InfoLogger.SetPrefix("  ")
 	defer logger.InfoLogger.SetPrefix("")
 
@@ -88,7 +89,7 @@ func downloadSource(version string, skipCache bool) (PackageMetadata, error) {
 }
 
 func buildFromSource(pkgMeta PackageMetadata, verbose bool) (PackageMetadata, error) {
-	logger.InfoLogger.Println(Bold("Building from source"))
+	logger.InfoLogger.Println(logger.Bold("Building from source"))
 	logger.InfoLogger.SetPrefix("  ")
 	defer logger.InfoLogger.SetPrefix("")
 
@@ -96,7 +97,7 @@ func buildFromSource(pkgMeta PackageMetadata, verbose bool) (PackageMetadata, er
 
 	logger.InfoLogger.Println("Unpacking source for " + pkgMeta.ArchivePath)
 
-	_, untarErr := RunCommand([]string{"tar", "zxvf", pkgMeta.ArchivePath}, state.GetStatePath("cache"), !verbose)
+	_, untarErr := exec.RunCommand([]string{"tar", "zxvf", pkgMeta.ArchivePath}, state.GetStatePath("cache"), !verbose)
 
 	if untarErr != nil {
 		return pkgMeta, untarErr
@@ -108,14 +109,14 @@ func buildFromSource(pkgMeta PackageMetadata, verbose bool) (PackageMetadata, er
 
 	targetDirectory := state.GetStatePath("runtimes", "py-"+pkgMeta.Version)
 
-	_, configureErr := RunCommand([]string{"./configure", "--prefix=" + targetDirectory, "--enable-optimizations"}, unzippedRoot, !verbose)
+	_, configureErr := exec.RunCommand([]string{"./configure", "--prefix=" + targetDirectory, "--enable-optimizations"}, unzippedRoot, !verbose)
 
 	if configureErr != nil {
 		return pkgMeta, configureErr
 	}
 
 	logger.InfoLogger.Println("Building")
-	_, buildErr := RunCommand([]string{"make", "altinstall", "-j4"}, unzippedRoot, !verbose)
+	_, buildErr := exec.RunCommand([]string{"make", "altinstall", "-j4"}, unzippedRoot, !verbose)
 
 	if buildErr != nil {
 		return pkgMeta, buildErr

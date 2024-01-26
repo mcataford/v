@@ -8,10 +8,11 @@ import (
 	cli "v/cli"
 	logger "v/logger"
 	state "v/state"
+	testutils "v/testutils"
 )
 
 func TestListVersionOutputsNoticeIfNoVersionsInstalled(t *testing.T) {
-	defer SetupAndCleanupEnvironment(t)()
+	defer testutils.SetupAndCleanupEnvironment(t)()
 
 	os.Mkdir(state.GetStatePath("runtimes"), 0750)
 	var out bytes.Buffer
@@ -28,7 +29,7 @@ func TestListVersionOutputsNoticeIfNoVersionsInstalled(t *testing.T) {
 }
 
 func TestListVersionOutputsVersionsInstalled(t *testing.T) {
-	defer SetupAndCleanupEnvironment(t)()
+	defer testutils.SetupAndCleanupEnvironment(t)()
 
 	os.MkdirAll(state.GetStatePath("runtimes", "py-1.2.3"), 0750)
 	var out bytes.Buffer
@@ -45,7 +46,7 @@ func TestListVersionOutputsVersionsInstalled(t *testing.T) {
 }
 
 func TestListVersionReturnsErrorOnFailure(t *testing.T) {
-	defer SetupAndCleanupEnvironment(t)()
+	defer testutils.SetupAndCleanupEnvironment(t)()
 
 	var out bytes.Buffer
 
@@ -65,7 +66,7 @@ func TestListVersionReturnsErrorOnFailure(t *testing.T) {
 }
 
 func TestListVersionOutputsVersionSelectedAndWarnsNotInstalled(t *testing.T) {
-	defer SetupAndCleanupEnvironment(t)()
+	defer testutils.SetupAndCleanupEnvironment(t)()
 
 	var out bytes.Buffer
 
@@ -81,7 +82,7 @@ func TestListVersionOutputsVersionSelectedAndWarnsNotInstalled(t *testing.T) {
 }
 
 func TestWhichOutputsVersionSelectedIfInstalled(t *testing.T) {
-	defer SetupAndCleanupEnvironment(t)()
+	defer testutils.SetupAndCleanupEnvironment(t)()
 
 	var out bytes.Buffer
 
@@ -99,7 +100,7 @@ func TestWhichOutputsVersionSelectedIfInstalled(t *testing.T) {
 }
 
 func TestWhichOutputsSystemVersionIfNoneSelected(t *testing.T) {
-	defer SetupAndCleanupEnvironment(t)()
+	defer testutils.SetupAndCleanupEnvironment(t)()
 
 	var out bytes.Buffer
 
@@ -116,7 +117,7 @@ func TestWhichOutputsSystemVersionIfNoneSelected(t *testing.T) {
 }
 
 func TestWhichOutputsVersionWithoutPrefixesIfRawOutput(t *testing.T) {
-	defer SetupAndCleanupEnvironment(t)()
+	defer testutils.SetupAndCleanupEnvironment(t)()
 
 	var out bytes.Buffer
 

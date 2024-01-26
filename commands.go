@@ -5,6 +5,7 @@ import (
 	"slices"
 	cli "v/cli"
 	logger "v/logger"
+	python "v/python"
 	state "v/state"
 )
 
@@ -58,12 +59,12 @@ func UninstallPython(args []string, flags cli.Flags, currentState state.State) e
 func InstallPython(args []string, flags cli.Flags, currentState state.State) error {
 	version := args[1]
 
-	return InstallPythonDistribution(version, flags.NoCache, flags.Verbose)
+	return python.InstallPythonDistribution(version, flags.NoCache, flags.Verbose)
 }
 
 func Use(args []string, flags cli.Flags, currentState state.State) error {
 	version := args[1]
-	if err := ValidateVersion(version); err != nil {
+	if err := python.ValidateVersion(version); err != nil {
 		return err
 	}
 
@@ -79,7 +80,7 @@ func Use(args []string, flags cli.Flags, currentState state.State) error {
 
 	if !found {
 		logger.InfoLogger.Println("Version not installed. Installing it first.")
-		InstallPythonDistribution(version, flags.NoCache, flags.Verbose)
+		python.InstallPythonDistribution(version, flags.NoCache, flags.Verbose)
 	}
 
 	state.WriteState(version)
@@ -88,7 +89,7 @@ func Use(args []string, flags cli.Flags, currentState state.State) error {
 	return nil
 }
 func ListVersions(args []string, flags cli.Flags, currentState state.State) error {
-	installedVersions, err := ListInstalledVersions()
+	installedVersions, err := python.ListInstalledVersions()
 
 	if err != nil {
 		return err
@@ -108,17 +109,17 @@ func ListVersions(args []string, flags cli.Flags, currentState state.State) erro
 
 // Which prints out the system path to the executable being used by `python`.
 func Which(args []string, flags cli.Flags, currentState state.State) error {
-	selectedVersion, _ := DetermineSelectedPythonVersion(currentState)
-	installedVersions, _ := ListInstalledVersions()
+	selectedVersion, _ := python.DetermineSelectedPythonVersion(currentState)
+	installedVersions, _ := python.ListInstalledVersions()
 	isInstalled := slices.Contains(installedVersions, selectedVersion.Version)
 
 	var printedPath string
 
 	if selectedVersion.Source == "system" {
-		_, sysPath := DetermineSystemPython()
+		_, sysPath := python.DetermineSystemPython()
 		printedPath = sysPath + " (system)"
 	} else if isInstalled {
-		tag := VersionStringToStruct(selectedVersion.Version)
+		tag := python.VersionStringToStruct(selectedVersion.Version)
 		printedPath = state.GetStatePath("runtimes", "py-"+selectedVersion.Version, "bin", "python"+tag.MajorMinor())
 	} else {
 		logger.InfoLogger.Printf("The desired version (%s) is not installed.\n", selectedVersion.Version)
@@ -130,7 +131,7 @@ func Which(args []string, flags cli.Flags, currentState state.State) error {
 	if flags.RawOutput {
 		prefix = ""
 	} else {
-		printedPath = Bold(printedPath)
+		printedPath = logger.Bold(printedPath)
 	}
 
 	logger.InfoLogger.Printf("%s%s\n", prefix, printedPath)
@@ -141,12 +142,12 @@ func Which(args []string, flags cli.Flags, currentState state.State) error {
 // and what configures it. If the version is configured by a file, the file is returned
 // under "source", if the system Python is used, "system" is returned as a source.
 func CurrentVersion(args []string, flags cli.Flags, currentState state.State) error {
-	selectedVersion, _ := DetermineSelectedPythonVersion(currentState)
-	installedVersions, _ := ListInstalledVersions()
+	selectedVersion, _ := python.DetermineSelectedPythonVersion(currentState)
+	installedVersions, _ := python.ListInstalledVersions()
 	isInstalled := slices.Contains(installedVersions, selectedVersion.Version)
 
 	if !isInstalled {
-		logger.InfoLogger.Println(Bold(Yellow("WARNING: This version is not installed.")))
+		logger.InfoLogger.Println(logger.Bold(logger.Yellow("WARNING: This version is not installed.")))
 	}
 
 	if flags.RawOutput {
@@ -154,6 +155,6 @@ func CurrentVersion(args []string, flags cli.Flags, currentState state.State) er
 		return nil
 	}
 
-	logger.InfoLogger.Printf("Python version: %s\nSource: %s\n", Bold(selectedVersion.Version), Bold(selectedVersion.Source))
+	logger.InfoLogger.Printf("Python version: %s\nSource: %s\n", logger.Bold(selectedVersion.Version), logger.Bold(selectedVersion.Source))
 	return nil
 }
