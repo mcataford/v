@@ -14,7 +14,7 @@ func TestWriteShim(t *testing.T) {
 
 	os.Mkdir(state.GetStatePath("shims"), 0775)
 	testShimPath := state.GetStatePath("shims", "testshim")
-	e := writeShim(testShimPath)
+	e := writeShim(testShimPath, "testcommand")
 
 	shimContent, _ := ioutil.ReadFile(testShimPath)
 
@@ -22,7 +22,7 @@ func TestWriteShim(t *testing.T) {
 		t.Errorf("Errored while writing shim")
 	}
 
-	if !strings.Contains(string(shimContent), "$(v python which --raw) $@") {
+	if !strings.Contains(string(shimContent), "testcommand") {
 		t.Errorf("Expected shim to contain pass-through via 'which', got %s", shimContent)
 	}
 

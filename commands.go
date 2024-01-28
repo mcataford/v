@@ -1,28 +1,25 @@
 package main
 
 import (
+	"maps"
 	"os"
 	cli "v/cli"
 	logger "v/logger"
+	python "v/python"
 	state "v/state"
 )
 
-var DIRECTORIES = []string{
+var stateDirectories = []string{
 	"cache",
 	"runtimes",
 	"shims",
 }
 
-var SHIMS = []string{
-	"python",
-	"python3",
-}
+const defaultFilePermissions = 0775
 
-const DEFAULT_PERMISSION = 0775
-
-func writeShim(shimPath string) error {
-	shimContent := []byte("#!/bin/bash\n$(v python which --raw) $@")
-	if err := os.WriteFile(shimPath, shimContent, DEFAULT_PERMISSION); err != nil {
+func writeShim(shimPath string, shimCall string) error {
+	shimContent := []byte("#!/bin/bash\n" + shimCall)
+	if err := os.WriteFile(shimPath, shimContent, defaultFilePermissions); err != nil {
 		return err
 	}
 
@@ -37,13 +34,22 @@ func Initialize(args []string, flags cli.Flags, currentState state.State) error 
 		return nil
 	}
 
-	os.Mkdir(state.GetStatePath(), DEFAULT_PERMISSION)
-	for _, dir := range DIRECTORIES {
-		os.Mkdir(state.GetStatePath(dir), DEFAULT_PERMISSION)
+	os.Mkdir(state.GetStatePath(), defaultFilePermissions)
+	logger.InfoLogger.Printf("Created state directory: %s\n", state.GetStatePath())
+	for _, dir := range stateDirectories {
+		newPath := state.GetStatePath(dir)
+		os.Mkdir(newPath, defaultFilePermissions)
+		logger.InfoLogger.Printf("Created %s\n", newPath)
 	}
 
-	for _, shim := range SHIMS {
-		writeShim(state.GetStatePath("shims", shim))
+	allShims := map[string]string{}
+
+	maps.Copy(allShims, python.Shims)
+
+	for shimName, shimContent := range allShims {
+		newShim := state.GetStatePath("shims", shimName)
+		writeShim(newShim, shimContent)
+		logger.InfoLogger.Printf("Created shim: %s\n", newShim)
 	}
 
 	return nil
