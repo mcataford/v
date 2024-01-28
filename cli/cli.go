@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"slices"
 	"strings"
 	logger "v/logger"
 	state "v/state"
@@ -29,6 +30,18 @@ func (c *CLI) AddNamespace(namespace Namespace) *CLI {
 	c.Namespaces[namespace.Label] = namespace
 
 	return c
+}
+
+func (c *CLI) ListNamespaces() []string {
+	labels := []string{}
+
+	for key := range c.Namespaces {
+		labels = append(labels, key)
+	}
+
+	slices.Sort(labels)
+
+	return labels
 }
 
 // Executes one of the registered commands if any match the provided
@@ -64,7 +77,8 @@ func (c CLI) Run(args []string, currentState state.State) error {
 // and descriptions based on registered commands (see: AddCommand).
 func (c CLI) Help() {
 	logger.InfoLogger.Printf("v: A simple version manager. (v%s)\n---", c.Metadata["Version"])
-	for _, namespace := range c.Namespaces {
+	for _, namespaceLabel := range c.ListNamespaces() {
+		namespace := c.Namespaces[namespaceLabel]
 		for _, commandLabel := range namespace.ListCommands() {
 			command := namespace.Commands[commandLabel]
 			logger.InfoLogger.Printf("\033[1m%-30s\033[0m%s\n", command.Usage, command.Description)
