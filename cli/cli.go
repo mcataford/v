@@ -65,7 +65,7 @@ func (c CLI) Run(args []string, currentState state.State) error {
 func (c CLI) Help() {
 	logger.InfoLogger.Printf("v: A simple version manager. (v%s)\n---", c.Metadata["Version"])
 	for _, namespace := range c.Namespaces {
-		for _, commandLabel := range namespace.OrderedCommands {
+		for _, commandLabel := range namespace.ListCommands() {
 			command := namespace.Commands[commandLabel]
 			logger.InfoLogger.Printf("\033[1m%-30s\033[0m%s\n", command.Usage, command.Description)
 		}

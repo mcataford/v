@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"slices"
 	"testing"
 	state "v/state"
 )
@@ -27,5 +28,23 @@ func TestNamespaceAddCommand(t *testing.T) {
 
 	if canary != 1 {
 		t.Errorf("Expected canary value to have been modified.")
+	}
+}
+
+func TestNamespaceListCommandsReturnsAlphaSortedLabels(t *testing.T) {
+	namespace := Namespace{}
+
+	handler := func(a []string, b Flags, c state.State) error {
+		return nil
+	}
+
+	// Inserted in non-alpha order.
+	namespace.AddCommand("b", handler, "", "")
+	namespace.AddCommand("a", handler, "", "")
+
+	labels := namespace.ListCommands()
+
+	if !slices.Equal(labels, []string{"a", "b"}) {
+		t.Errorf("Expected labels to be alpha-ordered. Got %v", labels)
 	}
 }

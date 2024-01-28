@@ -1,13 +1,13 @@
 package cli
 
 import (
+	"slices"
 	state "v/state"
 )
 
 type Namespace struct {
-	Label           string
-	Commands        map[string]Command
-	OrderedCommands []string
+	Label    string
+	Commands map[string]Command
 }
 
 // Command definition for CLI subcommands.
@@ -25,11 +25,23 @@ type Command struct {
 func (n *Namespace) AddCommand(label string, handler func([]string, Flags, state.State) error, usage string, description string) *Namespace {
 	if n.Commands == nil {
 		n.Commands = map[string]Command{}
-		n.OrderedCommands = []string{}
 	}
 
-	n.OrderedCommands = append(n.OrderedCommands, label)
 	n.Commands[label] = Command{Label: label, Handler: handler, Usage: usage, Description: description}
 
 	return n
+}
+
+// Returns an alpha-ordered list of commands in the namespace.
+// The commands are returned as a list of command labels / actions.
+func (n *Namespace) ListCommands() []string {
+	labels := []string{}
+
+	for key := range n.Commands {
+		labels = append(labels, key)
+	}
+
+	slices.Sort(labels)
+
+	return labels
 }
