@@ -21,7 +21,7 @@ var SHIMS = []string{
 const DEFAULT_PERMISSION = 0775
 
 func writeShim(shimPath string) error {
-	shimContent := []byte("#!/bin/bash\n$(v which --raw) $@")
+	shimContent := []byte("#!/bin/bash\n$(v python which --raw) $@")
 	if err := os.WriteFile(shimPath, shimContent, DEFAULT_PERMISSION); err != nil {
 		return err
 	}
