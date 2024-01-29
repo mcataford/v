@@ -32,6 +32,13 @@ func (t VersionTag) MajorMinor() string {
 	return t.Major + "." + t.Minor
 }
 
+// Installing new distribution happens in three stages:
+// 1. Validating that the version number is of a valid format;
+// 2. Downloading the source tarball;
+// 3. Unzipping + building from source.
+//
+// The tarball is cached in the `cache` state directory and is reused
+// if the same version is installed again later.
 func InstallPythonDistribution(version string, noCache bool) error {
 	if err := ValidateVersion(version); err != nil {
 		return err
@@ -56,8 +63,6 @@ func downloadSource(version string, skipCache bool) (PackageMetadata, error) {
 	archivePath := state.GetStatePath("cache", archiveName)
 	sourceUrl, _ := url.JoinPath(pythonReleasesBaseURL, version, archiveName)
 
-	client := http.Client{}
-
 	logger.InfoLogger.Println(logger.Bold("Downloading source for Python " + version))
 	logger.InfoLogger.SetPrefix("  ")
 	defer logger.InfoLogger.SetPrefix("")
@@ -67,7 +72,7 @@ func downloadSource(version string, skipCache bool) (PackageMetadata, error) {
 	if _, err := os.Stat(archivePath); errors.Is(err, os.ErrNotExist) || skipCache {
 		logger.InfoLogger.Println("Fetching from " + sourceUrl)
 
-		resp, err := client.Get(sourceUrl)
+		resp, err := http.Get(sourceUrl)
 
 		if err != nil {
 			return PackageMetadata{}, err
