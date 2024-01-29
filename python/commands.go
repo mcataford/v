@@ -17,7 +17,7 @@ func uninstallPython(args []string, flags cli.Flags, currentState state.State) e
 func installPython(args []string, flags cli.Flags, currentState state.State) error {
 	version := args[1]
 
-	return InstallPythonDistribution(version, flags.NoCache, flags.Verbose)
+	return InstallPythonDistribution(version, flags.NoCache)
 }
 
 func use(args []string, flags cli.Flags, currentState state.State) error {
@@ -38,7 +38,7 @@ func use(args []string, flags cli.Flags, currentState state.State) error {
 
 	if !found {
 		logger.InfoLogger.Println("Version not installed. Installing it first.")
-		InstallPythonDistribution(version, flags.NoCache, flags.Verbose)
+		InstallPythonDistribution(version, flags.NoCache)
 	}
 
 	state.WriteState(version)

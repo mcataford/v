@@ -100,7 +100,7 @@ func DetermineSelectedPythonVersion(currentState state.State) (SelectedVersion, 
 // DetermineSystemPython returns the unshimmed Python version and path.
 // It assumes that /bin/python is where system Python lives.
 func DetermineSystemPython() (string, string) {
-	versionOut, _ := exec.RunCommand([]string{"/bin/python", "--version"}, state.GetStatePath(), true)
+	versionOut, _ := exec.RunCommand([]string{"/bin/python", "--version"}, state.GetStatePath())
 	detectedVersion, _ := strings.CutPrefix(versionOut, "Python")
 	return strings.TrimSpace(detectedVersion), "/bin/python"
 }
