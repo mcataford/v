@@ -127,7 +127,7 @@ func TestListInstalledVersion(t *testing.T) {
 
 	os.Mkdir(state.GetStatePath("runtimes"), 0750)
 	for _, version := range versions {
-		os.Mkdir(state.GetStatePath("runtimes", "py-"+version), 0750)
+		os.MkdirAll(state.GetStatePath("runtimes", "python", version), 0750)
 	}
 
 	installedVersions, _ := ListInstalledVersions()
@@ -140,7 +140,7 @@ func TestListInstalledVersion(t *testing.T) {
 func TestListInstalledVersionNoVersionsInstalled(t *testing.T) {
 	defer testutils.SetupAndCleanupEnvironment(t)()
 
-	os.Mkdir(state.GetStatePath("runtimes"), 0750)
+	os.MkdirAll(state.GetStatePath("runtimes", "python"), 0750)
 
 	installedVersions, _ := ListInstalledVersions()
 

@@ -30,7 +30,7 @@ type SelectedVersion struct {
 }
 
 func ListInstalledVersions() ([]string, error) {
-	runtimesDir := state.GetStatePath("runtimes")
+	runtimesDir := state.GetStatePath("runtimes", "python")
 	entries, err := os.ReadDir(runtimesDir)
 
 	if err != nil {
@@ -40,7 +40,7 @@ func ListInstalledVersions() ([]string, error) {
 	installedVersions := []string{}
 
 	for _, d := range entries {
-		installedVersions = append(installedVersions, strings.TrimPrefix(d.Name(), "py-"))
+		installedVersions = append(installedVersions, d.Name())
 	}
 
 	return installedVersions, nil

@@ -14,7 +14,7 @@ import (
 func TestListVersionOutputsNoticeIfNoVersionsInstalled(t *testing.T) {
 	defer testutils.SetupAndCleanupEnvironment(t)()
 
-	os.Mkdir(state.GetStatePath("runtimes"), 0750)
+	os.MkdirAll(state.GetStatePath("runtimes", "python"), 0750)
 	var out bytes.Buffer
 
 	logger.InfoLogger.SetOutput(&out)
@@ -31,7 +31,7 @@ func TestListVersionOutputsNoticeIfNoVersionsInstalled(t *testing.T) {
 func TestListVersionOutputsVersionsInstalled(t *testing.T) {
 	defer testutils.SetupAndCleanupEnvironment(t)()
 
-	os.MkdirAll(state.GetStatePath("runtimes", "py-1.2.3"), 0750)
+	os.MkdirAll(state.GetStatePath("runtimes", "python", "1.2.3"), 0750)
 	var out bytes.Buffer
 
 	logger.InfoLogger.SetOutput(&out)
@@ -89,11 +89,11 @@ func TestWhichOutputsVersionSelectedIfInstalled(t *testing.T) {
 	logger.InfoLogger.SetOutput(&out)
 	defer logger.InfoLogger.SetOutput(os.Stdout)
 
-	os.MkdirAll(state.GetStatePath("runtimes", "py-1.2.3"), 0750)
+	os.MkdirAll(state.GetStatePath("runtimes", "python", "1.2.3"), 0750)
 	which([]string{}, cli.Flags{}, state.State{GlobalVersion: "1.2.3"})
 
 	captured := strings.TrimSpace(out.String())
-	expected := state.GetStatePath("runtimes", "py-1.2.3", "bin", "python1.2")
+	expected := state.GetStatePath("runtimes", "python", "1.2.3", "bin", "python1.2")
 	if !strings.Contains(captured, expected) {
 		t.Errorf("Unexpected message: %s, not %s", captured, expected)
 	}
@@ -124,11 +124,11 @@ func TestWhichOutputsVersionWithoutPrefixesIfRawOutput(t *testing.T) {
 	logger.InfoLogger.SetOutput(&out)
 	defer logger.InfoLogger.SetOutput(os.Stdout)
 
-	os.MkdirAll(state.GetStatePath("runtimes", "py-1.2.3"), 0750)
+	os.MkdirAll(state.GetStatePath("runtimes", "python", "1.2.3"), 0750)
 	which([]string{}, cli.Flags{RawOutput: true}, state.State{GlobalVersion: "1.2.3"})
 
 	captured := strings.TrimSpace(out.String())
-	expected := state.GetStatePath("runtimes", "py-1.2.3", "bin", "python1.2")
+	expected := state.GetStatePath("runtimes", "python", "1.2.3", "bin", "python1.2")
 	if captured != expected {
 		t.Errorf("Unexpected message: %s, not %s", captured, expected)
 	}

@@ -9,7 +9,7 @@ import (
 )
 
 func uninstallPython(args []string, flags cli.Flags, currentState state.State) error {
-	runtimePath := state.GetStatePath("runtimes", "py-"+args[1])
+	runtimePath := state.GetStatePath("runtimes", "python", args[1])
 	err := os.RemoveAll(runtimePath)
 	return err
 }
@@ -79,7 +79,7 @@ func which(args []string, flags cli.Flags, currentState state.State) error {
 		printedPath = sysPath + " (system)"
 	} else if isInstalled {
 		tag := VersionStringToStruct(selectedVersion.Version)
-		printedPath = state.GetStatePath("runtimes", "py-"+selectedVersion.Version, "bin", "python"+tag.MajorMinor())
+		printedPath = state.GetStatePath("runtimes", "python", selectedVersion.Version, "bin", "python"+tag.MajorMinor())
 	} else {
 		logger.InfoLogger.Printf("The desired version (%s) is not installed.\n", selectedVersion.Version)
 		return nil

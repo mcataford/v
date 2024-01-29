@@ -107,7 +107,11 @@ func buildFromSource(pkgMeta PackageMetadata, verbose bool) (PackageMetadata, er
 
 	logger.InfoLogger.Println("Configuring installer")
 
-	targetDirectory := state.GetStatePath("runtimes", "py-"+pkgMeta.Version)
+	if _, err := os.Stat(state.GetStatePath("runtimes", "python")); os.IsNotExist(err) {
+		os.Mkdir(state.GetStatePath("runtimes", "python"), 0775)
+	}
+
+	targetDirectory := state.GetStatePath("runtimes", "python", pkgMeta.Version)
 
 	_, configureErr := exec.RunCommand([]string{"./configure", "--prefix=" + targetDirectory, "--enable-optimizations"}, unzippedRoot, !verbose)
 
