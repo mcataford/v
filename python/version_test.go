@@ -149,6 +149,18 @@ func TestListInstalledVersionNoVersionsInstalled(t *testing.T) {
 	}
 }
 
+func TestListInstalledVersionNoVersionsInstalledNoPythonDir(t *testing.T) {
+	defer testutils.SetupAndCleanupEnvironment(t)()
+
+	os.MkdirAll(state.GetStatePath("runtimes"), 0750)
+
+	installedVersions, _ := ListInstalledVersions()
+
+	if len(installedVersions) != 0 {
+		t.Errorf("Expected 0 elements, got %d (%s).", len(installedVersions), installedVersions)
+	}
+}
+
 func TestListInstalledVersionNoRuntimesDir(t *testing.T) {
 	defer testutils.SetupAndCleanupEnvironment(t)()
 

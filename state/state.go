@@ -27,6 +27,14 @@ func GetStatePath(pathSegments ...string) string {
 	return path.Join(allSegments...)
 }
 
+func EnsureStatePath(pathSegments ...string) error {
+	path := GetStatePath(pathSegments...)
+
+	_, err := os.Stat(path)
+
+	return err
+}
+
 func ReadState() State {
 	c, _ := ioutil.ReadFile(GetStatePath("state.json"))
 

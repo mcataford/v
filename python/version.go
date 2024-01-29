@@ -30,8 +30,16 @@ type SelectedVersion struct {
 }
 
 func ListInstalledVersions() ([]string, error) {
+	if ensureErr := state.EnsureStatePath("runtimes"); ensureErr != nil {
+		return []string{}, ensureErr
+	}
+
 	runtimesDir := state.GetStatePath("runtimes", "python")
 	entries, err := os.ReadDir(runtimesDir)
+
+	if os.IsNotExist(err) {
+		return []string{}, nil
+	}
 
 	if err != nil {
 		return []string{}, err
