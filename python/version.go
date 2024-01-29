@@ -30,7 +30,7 @@ type SelectedVersion struct {
 }
 
 func ListInstalledVersions() ([]string, error) {
-	runtimesDir := state.GetStatePath("runtimes")
+	runtimesDir := state.GetStatePath("runtimes", "python")
 	entries, err := os.ReadDir(runtimesDir)
 
 	if err != nil {
@@ -40,7 +40,7 @@ func ListInstalledVersions() ([]string, error) {
 	installedVersions := []string{}
 
 	for _, d := range entries {
-		installedVersions = append(installedVersions, strings.TrimPrefix(d.Name(), "py-"))
+		installedVersions = append(installedVersions, d.Name())
 	}
 
 	return installedVersions, nil
@@ -100,7 +100,7 @@ func DetermineSelectedPythonVersion(currentState state.State) (SelectedVersion, 
 // DetermineSystemPython returns the unshimmed Python version and path.
 // It assumes that /bin/python is where system Python lives.
 func DetermineSystemPython() (string, string) {
-	versionOut, _ := exec.RunCommand([]string{"/bin/python", "--version"}, state.GetStatePath(), true)
+	versionOut, _ := exec.RunCommand([]string{"/bin/python", "--version"}, state.GetStatePath())
 	detectedVersion, _ := strings.CutPrefix(versionOut, "Python")
 	return strings.TrimSpace(detectedVersion), "/bin/python"
 }

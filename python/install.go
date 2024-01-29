@@ -32,7 +32,14 @@ func (t VersionTag) MajorMinor() string {
 	return t.Major + "." + t.Minor
 }
 
-func InstallPythonDistribution(version string, noCache bool, verbose bool) error {
+// Installing new distribution happens in three stages:
+// 1. Validating that the version number is of a valid format;
+// 2. Downloading the source tarball;
+// 3. Unzipping + building from source.
+//
+// The tarball is cached in the `cache` state directory and is reused
+// if the same version is installed again later.
+func InstallPythonDistribution(version string, noCache bool) error {
 	if err := ValidateVersion(version); err != nil {
 		return err
 	}
@@ -42,9 +49,8 @@ func InstallPythonDistribution(version string, noCache bool, verbose bool) error
 	if dlerr != nil {
 		return dlerr
 	}
-	_, err := buildFromSource(packageMetadata, verbose)
 
-	if err != nil {
+	if _, err := buildFromSource(packageMetadata); err != nil {
 		return err
 	}
 
@@ -57,19 +63,16 @@ func downloadSource(version string, skipCache bool) (PackageMetadata, error) {
 	archivePath := state.GetStatePath("cache", archiveName)
 	sourceUrl, _ := url.JoinPath(pythonReleasesBaseURL, version, archiveName)
 
-	client := http.Client{}
-
 	logger.InfoLogger.Println(logger.Bold("Downloading source for Python " + version))
 	logger.InfoLogger.SetPrefix("  ")
 	defer logger.InfoLogger.SetPrefix("")
 
 	start := time.Now()
-	_, err := os.Stat(archivePath)
 
-	if errors.Is(err, os.ErrNotExist) || skipCache {
+	if _, err := os.Stat(archivePath); errors.Is(err, os.ErrNotExist) || skipCache {
 		logger.InfoLogger.Println("Fetching from " + sourceUrl)
 
-		resp, err := client.Get(sourceUrl)
+		resp, err := http.Get(sourceUrl)
 
 		if err != nil {
 			return PackageMetadata{}, err
@@ -88,7 +91,7 @@ func downloadSource(version string, skipCache bool) (PackageMetadata, error) {
 	return PackageMetadata{ArchivePath: archivePath, Version: version}, nil
 }
 
-func buildFromSource(pkgMeta PackageMetadata, verbose bool) (PackageMetadata, error) {
+func buildFromSource(pkgMeta PackageMetadata) (PackageMetadata, error) {
 	logger.InfoLogger.Println(logger.Bold("Building from source"))
 	logger.InfoLogger.SetPrefix("  ")
 	defer logger.InfoLogger.SetPrefix("")
@@ -97,9 +100,7 @@ func buildFromSource(pkgMeta PackageMetadata, verbose bool) (PackageMetadata, er
 
 	logger.InfoLogger.Println("Unpacking source for " + pkgMeta.ArchivePath)
 
-	_, untarErr := exec.RunCommand([]string{"tar", "zxvf", pkgMeta.ArchivePath}, state.GetStatePath("cache"), !verbose)
-
-	if untarErr != nil {
+	if _, untarErr := exec.RunCommand([]string{"tar", "zxvf", pkgMeta.ArchivePath}, state.GetStatePath("cache")); untarErr != nil {
 		return pkgMeta, untarErr
 	}
 
@@ -107,18 +108,19 @@ func buildFromSource(pkgMeta PackageMetadata, verbose bool) (PackageMetadata, er
 
 	logger.InfoLogger.Println("Configuring installer")
 
-	targetDirectory := state.GetStatePath("runtimes", "py-"+pkgMeta.Version)
+	if _, err := os.Stat(state.GetStatePath("runtimes", "python")); os.IsNotExist(err) {
+		os.Mkdir(state.GetStatePath("runtimes", "python"), 0775)
+	}
 
-	_, configureErr := exec.RunCommand([]string{"./configure", "--prefix=" + targetDirectory, "--enable-optimizations"}, unzippedRoot, !verbose)
+	targetDirectory := state.GetStatePath("runtimes", "python", pkgMeta.Version)
 
-	if configureErr != nil {
+	if _, configureErr := exec.RunCommand([]string{"./configure", "--prefix=" + targetDirectory, "--enable-optimizations"}, unzippedRoot); configureErr != nil {
 		return pkgMeta, configureErr
 	}
 
 	logger.InfoLogger.Println("Building")
-	_, buildErr := exec.RunCommand([]string{"make", "altinstall", "-j4"}, unzippedRoot, !verbose)
 
-	if buildErr != nil {
+	if _, buildErr := exec.RunCommand([]string{"make", "altinstall", "-j4"}, unzippedRoot); buildErr != nil {
 		return pkgMeta, buildErr
 	}
 
@@ -128,7 +130,6 @@ func buildFromSource(pkgMeta PackageMetadata, verbose bool) (PackageMetadata, er
 
 	pkgMeta.InstallPath = targetDirectory
 
-	logger.InfoLogger.Printf("Installed Python %s at %s\n", pkgMeta.Version, pkgMeta.InstallPath)
-	logger.InfoLogger.Printf("✅ Done (%s)\n", time.Since(start))
+	logger.InfoLogger.Printf("✅ Installed Python %s at %s (%s)\n", pkgMeta.Version, pkgMeta.InstallPath, time.Since(start))
 	return pkgMeta, nil
 }

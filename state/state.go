@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"strings"
 )
 
 // Persistent state used by the CLI to track runtime information
@@ -46,12 +45,12 @@ func WriteState(version string) {
 }
 
 func GetAvailableVersions() []string {
-	entries, _ := os.ReadDir(GetStatePath("runtimes"))
+	entries, _ := os.ReadDir(GetStatePath("runtimes", "python"))
 
 	versions := []string{}
 
 	for _, d := range entries {
-		versions = append(versions, strings.TrimPrefix(d.Name(), "py-"))
+		versions = append(versions, d.Name())
 	}
 
 	return versions

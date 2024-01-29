@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"os"
 	"slices"
 	"strings"
 	logger "v/logger"
@@ -47,6 +48,12 @@ func (c *CLI) ListNamespaces() []string {
 // Executes one of the registered commands if any match the provided
 // user arguments.
 func (c CLI) Run(args []string, currentState state.State) error {
+	flags := collectFlags(args)
+
+	if flags.Verbose {
+		logger.DebugLogger.SetOutput(os.Stdout)
+	}
+
 	if len(args) == 0 {
 		c.Help()
 		return nil
@@ -58,8 +65,6 @@ func (c CLI) Run(args []string, currentState state.State) error {
 		c.Help()
 		return nil
 	}
-
-	flags := collectFlags(args)
 
 	namespace, isNamespace := c.Namespaces[action]
 
