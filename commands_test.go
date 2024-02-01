@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
 	cli "v/cli"
+	logger "v/logger"
 	python "v/python"
 	state "v/state"
 	testutils "v/testutils"
@@ -28,6 +30,17 @@ func TestWriteShim(t *testing.T) {
 		t.Errorf("Expected shim to contain pass-through via 'which', got %s", shimContent)
 	}
 
+}
+
+func TestWriteShimBubblesError(t *testing.T) {
+	defer testutils.SetupAndCleanupEnvironment(t)()
+
+	testShimPath := state.GetStatePath("shims", "testshim")
+	err := writeShim(testShimPath, "testcommand")
+
+	if err == nil {
+		t.Errorf("Expected error")
+	}
 }
 
 func TestInitializeCreatesStateDirectories(t *testing.T) {
@@ -77,5 +90,28 @@ func TestInitializeCreatesAllPythonShims(t *testing.T) {
 		if !strings.Contains(string(shimContent), shimCall) {
 			t.Errorf("%s shim does not contain expected call (%s not in %s)", shimLabel, shimCall, shimContent)
 		}
+	}
+}
+
+func TestInitializeWithAddPathPrintsExportPATH(t *testing.T) {
+	defer testutils.SetupAndCleanupEnvironment(t)()
+
+	var buf bytes.Buffer
+
+	logger.InfoLogger.SetOutput(&buf)
+
+	defer func() {
+		logger.InfoLogger.SetOutput(os.Stdout)
+	}()
+
+	err := Initialize([]string{}, cli.Flags{AddPath: true}, state.State{})
+
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	expected := "export PATH=" + state.GetStatePath("shims") + ":$PATH\n"
+	if buf.String() != expected {
+		t.Errorf("Expected PATH export, got %s", buf.String())
 	}
 }

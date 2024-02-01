@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"testing"
+	testutils "v/testutils"
 )
 
 // If an override is provided via V_ROOT, it's used as state path.
@@ -63,5 +64,23 @@ func TestWriteStateWritesAtPath(t *testing.T) {
 
 	if readState != mockState {
 		t.Errorf("Did not find expected state. %v != %v", mockState, readState)
+	}
+}
+
+func TestEnsureStatePath(t *testing.T) {
+	// EnsureStatePath returns an error if the given path doesn't exist.
+	defer testutils.SetupAndCleanupEnvironment(t)()
+	err := EnsureStatePath("nonfile")
+
+	if err == nil || !os.IsNotExist(err) {
+		t.Errorf("Expected NotExist error, got %v.", err)
+	}
+
+	path, _ := os.MkdirTemp("", GetStatePath("testfolder"))
+
+	err = EnsureStatePath(path)
+
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
 	}
 }
