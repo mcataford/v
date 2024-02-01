@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	cli "v/cli"
+	commands "v/commands"
 	python "v/python"
 	state "v/state"
 )
@@ -20,7 +21,7 @@ func main() {
 
 	root := cli.Namespace{Label: ""}
 	root.AddCommand(
-		"init", Initialize, "v init", "Initializes the v state.",
+		"init", commands.Initialize, "v init", "Initializes the v state.",
 	)
 
 	cli := cli.CLI{
