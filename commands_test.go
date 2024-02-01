@@ -32,6 +32,17 @@ func TestWriteShim(t *testing.T) {
 
 }
 
+func TestWriteShimBubblesError(t *testing.T) {
+	defer testutils.SetupAndCleanupEnvironment(t)()
+
+	testShimPath := state.GetStatePath("shims", "testshim")
+	err := writeShim(testShimPath, "testcommand")
+
+	if err == nil {
+		t.Errorf("Expected error")
+	}
+}
+
 func TestInitializeCreatesStateDirectories(t *testing.T) {
 	defer testutils.SetupAndCleanupEnvironment(t)()
 
