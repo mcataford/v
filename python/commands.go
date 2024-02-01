@@ -26,7 +26,7 @@ func use(args []string, flags cli.Flags, currentState state.State) error {
 		return err
 	}
 
-	availableVersions := state.GetAvailableVersions()
+	availableVersions := GetAvailableVersions()
 
 	found := false
 	for _, v := range availableVersions {

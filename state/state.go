@@ -51,15 +51,3 @@ func WriteState(version string) {
 	d, _ := json.Marshal(state)
 	ioutil.WriteFile(GetStatePath("state.json"), d, 0750)
 }
-
-func GetAvailableVersions() []string {
-	entries, _ := os.ReadDir(GetStatePath("runtimes", "python"))
-
-	versions := []string{}
-
-	for _, d := range entries {
-		versions = append(versions, d.Name())
-	}
-
-	return versions
-}

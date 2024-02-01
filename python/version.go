@@ -112,3 +112,16 @@ func DetermineSystemPython() (string, string) {
 	detectedVersion, _ := strings.CutPrefix(versionOut, "Python")
 	return strings.TrimSpace(detectedVersion), "/bin/python"
 }
+
+// Gets all install versions.
+func GetAvailableVersions() []string {
+	entries, _ := os.ReadDir(state.GetStatePath("runtimes", "python"))
+
+	versions := []string{}
+
+	for _, d := range entries {
+		versions = append(versions, d.Name())
+	}
+
+	return versions
+}
