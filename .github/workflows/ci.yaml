@@ -19,6 +19,15 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
       - run: . script/test.sh
+  format:
+    name: "Formatting check"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - run: . script/format.sh
   integration-tests:
     name: "Integration tests"
     runs-on: ubuntu-latest
