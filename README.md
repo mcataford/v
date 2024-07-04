@@ -1,6 +1,10 @@
 # v
 A version manager you might not want to use.
 
+> # ✈️ Moved away!
+>
+> This project has moved away from Github and is now hosted [elsewhere](https://forge.karnov.club/marc/v).
+
 ## Overview
 
 `v` is a simple version manager inspired from other tools like [asdf](https://github.com/asdf-vm/asdf), [pyenv](https://github.com/pyenv/pyenv), [n](https://github.com/tj/n) and [nvm](https://github.com/nvm-sh/nvm). At it's core, it's a reinvention of the wheel with some extras.
